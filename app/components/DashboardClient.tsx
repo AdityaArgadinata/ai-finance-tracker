@@ -78,7 +78,6 @@ export function DashboardClient({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Trend Chart */}
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:bg-slate-900 dark:border-slate-800">
         <h2 className="text-lg font-semibold text-slate-900 mb-4 dark:text-white">
           Tren Pemasukan vs Pengeluaran
