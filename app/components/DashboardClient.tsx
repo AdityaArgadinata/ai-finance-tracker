@@ -25,6 +25,12 @@ interface CategoryBreakdown {
   nominal: number;
 }
 
+interface PieLabelEntry {
+  percent?: number;
+  index?: number;
+  value?: number;
+}
+
 interface DashboardClientProps {
   trendData: TrendDataPoint[];
   categoryBreakdown: CategoryBreakdown[];
@@ -58,6 +64,17 @@ export function DashboardClient({
 
   // Calculate total for percentage
   const totalExpense = categoryBreakdown.reduce((sum, item) => sum + item.nominal, 0);
+
+  const renderPieLabel = (entry: PieLabelEntry) => {
+    const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+    const percent = entry.percent || 0;
+    const index = entry.index || 0;
+    const kategori = categoryBreakdown[index]?.kategori || "";
+    
+    return isMobile 
+      ? `${(percent * 100).toFixed(0)}%`
+      : `${kategori} (${(percent * 100).toFixed(0)}%)`;
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -142,12 +159,7 @@ export function DashboardClient({
               cx="50%"
               cy="50%"
               labelLine={false}
-              label={({ kategori, percent }) => {
-                const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-                return isMobile 
-                  ? `${(percent * 100).toFixed(0)}%`
-                  : `${kategori} (${(percent * 100).toFixed(0)}%)`;
-              }}
+              label={renderPieLabel}
               outerRadius={80}
               fill="#8884d8"
               dataKey="nominal"
@@ -161,10 +173,6 @@ export function DashboardClient({
             </Pie>
             <Tooltip
               formatter={(value) => formatCurrency(Number(value))}
-              labelFormatter={(label) => {
-                const item = categoryBreakdown.find(x => x.nominal === label);
-                return item ? `${item.kategori}` : "";
-              }}
               contentStyle={{
                 backgroundColor: "#1f2937",
                 border: "1px solid #374151",
