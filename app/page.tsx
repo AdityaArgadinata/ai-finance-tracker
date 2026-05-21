@@ -1,65 +1,164 @@
-import Image from "next/image";
+import { getTransactions, type Transaction } from "@/lib/supabase";
+import { format } from "date-fns";
+import { id as idLocale } from "date-fns/locale";
+import { SummaryCards } from "@/app/components/SummaryCards";
+import { DashboardClient } from "@/app/components/DashboardClient";
+import { DateRangeFilter } from "@/app/components/DateRangeFilter";
+import { PaginatedTransactions } from "@/app/components/PaginatedTransactions";
 
-export default function Home() {
+interface TrendDataPoint {
+  date: string;
+  pemasukan: number;
+  pengeluaran: number;
+}
+
+interface CategoryBreakdown {
+  kategori: string;
+  nominal: number;
+}
+
+function aggregateTrendData(transactions: Transaction[]): TrendDataPoint[] {
+  const trendMap = new Map<string, { pemasukan: number; pengeluaran: number }>();
+
+  transactions.forEach((tx) => {
+    const date = format(new Date(tx.created_at), "dd MMM", { locale: idLocale });
+
+    const existing = trendMap.get(date) || {
+      pemasukan: 0,
+      pengeluaran: 0,
+    };
+
+    if (tx.jenis === "pemasukan") {
+      existing.pemasukan += tx.nominal;
+    } else {
+      existing.pengeluaran += tx.nominal;
+    }
+
+    trendMap.set(date, existing);
+  });
+
+  return Array.from(trendMap.entries())
+    .reverse()
+    .map(([date, values]) => ({
+      date,
+      pemasukan: values.pemasukan,
+      pengeluaran: values.pengeluaran,
+    }));
+}
+
+function aggregateCategoryBreakdown(
+  transactions: Transaction[]
+): CategoryBreakdown[] {
+  const categoryMap = new Map<string, number>();
+
+  transactions.forEach((tx) => {
+    if (tx.jenis === "pengeluaran") {
+      const existing = categoryMap.get(tx.kategori) || 0;
+      categoryMap.set(tx.kategori, existing + tx.nominal);
+    }
+  });
+
+  return Array.from(categoryMap.entries())
+    .map(([kategori, nominal]) => ({ kategori, nominal }))
+    .sort((a, b) => b.nominal - a.nominal);
+}
+
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const startDateParam = params.startDate as string | undefined;
+  const endDateParam = params.endDate as string | undefined;
+
+  const allTransactions = await getTransactions();
+
+  // Filter transactions by date range if provided
+  let filteredTransactions = allTransactions;
+
+  if (startDateParam || endDateParam) {
+    filteredTransactions = allTransactions.filter((tx) => {
+      const txDate = new Date(tx.created_at);
+
+      if (startDateParam) {
+        const startDate = new Date(startDateParam);
+        startDate.setHours(0, 0, 0, 0);
+        if (txDate < startDate) return false;
+      }
+
+      if (endDateParam) {
+        const endDate = new Date(endDateParam);
+        endDate.setHours(23, 59, 59, 999);
+        if (txDate > endDate) return false;
+      }
+
+      return true;
+    });
+  }
+
+  // Calculate summary statistics from filtered data
+  const totalIncome = filteredTransactions
+    .filter((tx) => tx.jenis === "pemasukan")
+    .reduce((sum, tx) => sum + tx.nominal, 0);
+
+  const totalExpense = filteredTransactions
+    .filter((tx) => tx.jenis === "pengeluaran")
+    .reduce((sum, tx) => sum + tx.nominal, 0);
+
+  const totalBalance = totalIncome - totalExpense;
+
+  // Aggregate data for charts
+  const trendData = aggregateTrendData(filteredTransactions);
+  const categoryBreakdown = aggregateCategoryBreakdown(filteredTransactions);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+      {/* Header */}
+      <div className="border-b border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+              Dashboard Keuangan
+            </h1>
+            <p className="mt-2 text-slate-600 dark:text-slate-400">
+              Analisis real-time transaksi dan pengeluaran Anda
+            </p>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+      </div>
+
+      {/* Main Content */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+        <div className="space-y-8">
+          {/* Date Range Filter */}
+          <section>
+            <DateRangeFilter />
+          </section>
+
+          {/* Summary Cards Section */}
+          <section>
+            <SummaryCards
+              totalBalance={totalBalance}
+              totalIncome={totalIncome}
+              totalExpense={totalExpense}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          </section>
+
+          {/* Charts Section */}
+          <section>
+            <DashboardClient
+              trendData={trendData}
+              categoryBreakdown={categoryBreakdown}
+            />
+          </section>
+
+          {/* Paginated Recent Transactions Section */}
+          <section>
+            <PaginatedTransactions transactions={filteredTransactions} />
+          </section>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
