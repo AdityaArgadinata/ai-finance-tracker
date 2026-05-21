@@ -65,16 +65,19 @@ export function DashboardClient({
   // Calculate total for percentage
   const totalExpense = categoryBreakdown.reduce((sum, item) => sum + item.nominal, 0);
 
-  const renderPieLabel = (entry: PieLabelEntry) => {
+  const renderPieLabel = (props: any) => {
     const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-    const percent = entry.percent || 0;
-    const index = entry.index || 0;
+    const percent = props.percent || 0;
+    const index = props.index || 0;
     const kategori = categoryBreakdown[index]?.kategori || "";
     
     return isMobile 
       ? `${(percent * 100).toFixed(0)}%`
       : `${kategori} (${(percent * 100).toFixed(0)}%)`;
   };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const labelRender = renderPieLabel as any;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -158,7 +161,7 @@ export function DashboardClient({
               cx="50%"
               cy="50%"
               labelLine={false}
-              label={renderPieLabel}
+              label={labelRender}
               outerRadius={80}
               fill="#8884d8"
               dataKey="nominal"
