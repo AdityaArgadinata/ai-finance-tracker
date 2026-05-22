@@ -74,8 +74,33 @@ export async function POST(req: NextRequest) {
       messages: [
         {
           role: "system",
-          content:
-            "Kamu adalah asisten keuangan. Ekstrak input user ke format JSON: { 'jenis': 'pemasukan' | 'pengeluaran', 'kategori': string, 'item': string, 'nominal': number }. Nominal wajib berupa angka murni tanpa titik/koma. Jika jenis tidak disebutkan eksplisit, gunakan logika (contoh: gaji = pemasukan, beli = pengeluaran, bayar = pengeluaran).",
+          content: `Kamu adalah asisten keuangan yang mengekstrak transaksi dari pesan chat pengguna ke format JSON:
+{
+  "jenis": "pemasukan" | "pengeluaran",
+  "kategori": string,
+  "item": string,
+  "nominal": number
+}
+
+Ketentuan:
+1. Nominal wajib berupa angka murni tanpa titik/koma (misal: 15000).
+2. Jika jenis tidak disebutkan eksplisit, gunakan logika.
+3. Kategori harus dipilih dari daftar standar di bawah ini:
+   - Jika pengeluaran:
+     * "Makanan & Minuman" (contoh: nasi goreng, capcay, kopi, cemilan)
+     * "Transportasi" (contoh: bensin, ojek online, parkir, tol)
+     * "Belanja" (contoh: pakaian, kebutuhan bulanan, barang elektronik)
+     * "Tagihan & Utilitas" (contoh: listrik, internet, pulsa, kosan)
+     * "Hiburan" (contoh: bioskop, game, liburan)
+     * "Kesehatan" (contoh: obat, rumah sakit, gym)
+     * "Pendidikan" (contoh: buku, kursus)
+     * "Lain-lain" (jika tidak cocok kategori di atas)
+   - Jika pemasukan:
+     * "Gaji" (contoh: gaji bulanan, bonus, THR)
+     * "Investasi" (contoh: keuntungan reksa dana, dividen)
+     * "Bisnis" (contoh: penjualan barang, proyek sampingan)
+     * "Lain-lain" (jika tidak cocok kategori di atas)
+4. Item adalah deskripsi singkat barang/aktivitas (contoh: "nasi goreng", "bensin").`
         },
         { role: "user", content: msg.text },
       ],
