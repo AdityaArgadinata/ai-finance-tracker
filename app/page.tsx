@@ -2,6 +2,7 @@ import { getTransactions, type Transaction } from "@/lib/supabase";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { SummaryCards } from "@/app/components/SummaryCards";
+import { AIAdvisorCard } from "@/app/components/AIAdvisorCard";
 import { DashboardClient } from "@/app/components/DashboardClient";
 import { DateRangeFilter } from "@/app/components/DateRangeFilter";
 import { PaginatedTransactions } from "@/app/components/PaginatedTransactions";
@@ -107,6 +108,9 @@ export default async function Home({
     .reduce((sum, tx) => sum + tx.nominal, 0);
 
   const totalBalance = totalIncome - totalExpense;
+  
+  // Calculate burn rate percentage
+  const burnRate = totalIncome > 0 ? (totalExpense / totalIncome) * 100 : 0;
 
   // Aggregate data for charts
   const trendData = aggregateTrendData(filteredTransactions);
@@ -142,6 +146,20 @@ export default async function Home({
               totalBalance={totalBalance}
               totalIncome={totalIncome}
               totalExpense={totalExpense}
+              burnRate={burnRate}
+            />
+          </section>
+
+          {/* AI Advisor Section */}
+          <section>
+            <AIAdvisorCard
+              summaryData={{
+                totalIncome,
+                totalExpense,
+                totalBalance,
+                burnRate,
+                topCategories: categoryBreakdown.slice(0, 3),
+              }}
             />
           </section>
 
