@@ -1,8 +1,7 @@
 "use client";
 
 import { format } from "date-fns";
-import { id as idLocale } from "date-fns/locale";
-import { ArrowUpRight, ArrowDownLeft } from "lucide-react";
+import { translateCategory } from "@/lib/utils";
 
 interface Transaction {
   id: number;
@@ -28,37 +27,38 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
   };
 
   const formatDate = (dateString: string) => {
-    return format(new Date(dateString), "dd MMM yyyy HH:mm", {
-      locale: idLocale,
-    });
+    return format(new Date(dateString), "dd-MMM-yyyy HH:mm");
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:bg-slate-900 dark:border-slate-800">
-      <div className="border-b border-slate-200 px-6 py-4 dark:border-slate-800">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-          Transaksi Terakhir
+    <div className="font-mono text-xs border border-[#333] bg-[#0c0c0c]">
+      <div className="border-b border-[#333] px-4 py-2.5 bg-[#111] flex justify-between items-center">
+        <h2 className="font-bold text-[#ffb000] uppercase tracking-wider">
+          Transaction Ledger List
         </h2>
+        <span className="text-[10px] text-slate-400 font-bold">
+          TOTAL ACTIVE RECORDS: {transactions.length}
+        </span>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full">
+      <div className="overflow-x-auto terminal-scroll">
+        <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b border-slate-200 dark:border-slate-800">
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-600 dark:text-slate-400">
-                Tanggal
+            <tr className="bg-[#151515] text-slate-400 border-b border-[#333]">
+              <th className="px-4 py-2 font-bold border-r border-[#222] w-1/4">
+                Timestamp
               </th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-600 dark:text-slate-400">
-                Item
+              <th className="px-4 py-2 font-bold border-r border-[#222] w-1/4">
+                Item / Description
               </th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-600 dark:text-slate-400">
-                Kategori
+              <th className="px-4 py-2 font-bold border-r border-[#222] w-1/6">
+                Category
               </th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-600 dark:text-slate-400">
-                Jenis
+              <th className="px-4 py-2 font-bold border-r border-[#222] w-1/6">
+                Type
               </th>
-              <th className="px-6 py-3 text-right text-sm font-semibold text-slate-600 dark:text-slate-400">
-                Nominal
+              <th className="px-4 py-2 font-bold text-right w-1/6">
+                Value (IDR)
               </th>
             </tr>
           </thead>
@@ -66,43 +66,35 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
             {transactions.map((tx) => (
               <tr
                 key={tx.id}
-                className="border-b border-slate-100 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800 dark:border-slate-800 transition-colors"
+                className="border-b border-[#222] hover:bg-[#1a1a1a] transition-colors"
               >
-                <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                <td className="px-4 py-2 text-slate-300 border-r border-[#222] whitespace-nowrap">
                   {formatDate(tx.created_at)}
                 </td>
-                <td className="px-6 py-4 text-sm text-slate-900 dark:text-white font-medium">
+                <td className="px-4 py-2 text-white font-semibold border-r border-[#222]">
                   {tx.item}
                 </td>
-                <td className="px-6 py-4 text-sm">
-                  <span className="inline-block px-3 py-1 rounded-full bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 text-xs font-medium">
-                    {tx.kategori}
+                <td className="px-4 py-2 border-r border-[#222]">
+                  <span className="font-bold text-white text-[10px]">
+                    {translateCategory(tx.kategori)}
                   </span>
                 </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-1">
-                    {tx.jenis === "pemasukan" ? (
-                      <>
-                        <ArrowUpRight className="h-4 w-4 text-green-600 dark:text-green-400" />
-                        <span className="text-sm font-medium text-green-600 dark:text-green-400">
-                          Masuk
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <ArrowDownLeft className="h-4 w-4 text-red-600 dark:text-red-400" />
-                        <span className="text-sm font-medium text-red-600 dark:text-red-400">
-                          Keluar
-                        </span>
-                      </>
-                    )}
-                  </div>
+                <td className="px-4 py-2 border-r border-[#222]">
+                  <span
+                    className={`font-bold text-[10px] ${
+                      tx.jenis === "pemasukan"
+                        ? "text-[#00ff66]"
+                        : "text-[#ff4444]"
+                    }`}
+                  >
+                    {tx.jenis === "pemasukan" ? "INFLOW" : "OUTFLOW"}
+                  </span>
                 </td>
                 <td
-                  className={`px-6 py-4 text-right text-sm font-semibold ${
+                  className={`px-4 py-2 text-right font-bold ${
                     tx.jenis === "pemasukan"
-                      ? "text-green-600 dark:text-green-400"
-                      : "text-red-600 dark:text-red-400"
+                      ? "text-[#00ff66]"
+                      : "text-[#ff4444]"
                   }`}
                 >
                   {tx.jenis === "pemasukan" ? "+" : "-"}
@@ -115,9 +107,9 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
       </div>
 
       {transactions.length === 0 && (
-        <div className="flex items-center justify-center px-6 py-12">
-          <p className="text-slate-500 dark:text-slate-400">
-            Belum ada transaksi
+        <div className="flex items-center justify-center py-8">
+          <p className="text-slate-500 font-bold">
+            NO TRANSACTION RECORDS FOUND
           </p>
         </div>
       )}

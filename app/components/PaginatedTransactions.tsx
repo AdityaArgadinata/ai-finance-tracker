@@ -75,35 +75,27 @@ export function PaginatedTransactions({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 font-mono text-xs">
       <RecentTransactions transactions={paginatedTransactions} />
 
       {totalPages > 1 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:bg-slate-900 dark:border-slate-800">
-          <div className="text-sm text-slate-600 dark:text-slate-400">
-            Menampilkan{" "}
-            <span className="font-semibold text-slate-900 dark:text-white">
-              {startIndex + 1}
-            </span>{" "}
-            hingga{" "}
-            <span className="font-semibold text-slate-900 dark:text-white">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border border-[#333] bg-[#0c0c0c] p-3 text-slate-300">
+          <div>
+            Showing <span className="font-bold text-white">{startIndex + 1}</span> to{" "}
+            <span className="font-bold text-white">
               {Math.min(endIndex, transactions.length)}
             </span>{" "}
-            dari{" "}
-            <span className="font-semibold text-slate-900 dark:text-white">
-              {transactions.length}
-            </span>{" "}
-            transaksi
+            of <span className="font-bold text-white">{transactions.length}</span> records
           </div>
 
           <div className="flex items-center gap-2">
             <button
               onClick={handlePreviousPage}
               disabled={currentPage === 1}
-              className="flex items-center justify-center gap-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors dark:bg-slate-800 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+              className="flex items-center justify-center gap-1 border border-[#333] bg-[#111] px-3 py-1.5 font-bold text-slate-300 hover:text-white disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed transition-colors"
             >
-              <ChevronLeft className="h-4 w-4" />
-              <span className="hidden sm:inline">Sebelumnya</span>
+              <ChevronLeft className="h-3.5 w-3.5" />
+              <span>PREV</span>
             </button>
 
             <div className="flex items-center gap-1">
@@ -112,12 +104,12 @@ export function PaginatedTransactions({
                   key={index}
                   onClick={() => typeof page === "number" && handlePageChange(page)}
                   disabled={page === "..." || page === currentPage}
-                  className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  className={`px-3 py-1.5 font-bold transition-colors ${
                     page === currentPage
-                      ? "bg-blue-600 text-white"
+                      ? "bg-[#00a2ff] text-white border border-[#00a2ff]"
                       : page === "..."
-                        ? "cursor-default text-slate-400 dark:text-slate-600"
-                        : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+                        ? "cursor-default text-slate-600"
+                        : "border border-[#333] bg-[#111] text-slate-300 hover:text-white cursor-pointer"
                   }`}
                 >
                   {page}
@@ -128,10 +120,10 @@ export function PaginatedTransactions({
             <button
               onClick={handleNextPage}
               disabled={currentPage === totalPages}
-              className="flex items-center justify-center gap-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors dark:bg-slate-800 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+              className="flex items-center justify-center gap-1 border border-[#333] bg-[#111] px-3 py-1.5 font-bold text-slate-300 hover:text-white disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed transition-colors"
             >
-              <span className="hidden sm:inline">Selanjutnya</span>
-              <ChevronRight className="h-4 w-4" />
+              <span>NEXT</span>
+              <ChevronRight className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>

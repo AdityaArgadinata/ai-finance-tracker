@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles } from "lucide-react";
 import { getFinancialAdvice } from "@/app/actions/ai-advisor";
 
 interface AIAdvisorCardProps {
@@ -30,7 +29,7 @@ export function AIAdvisorCard({ summaryData }: AIAdvisorCardProps) {
       setAdvice(result);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Terjadi kesalahan saat memproses AI"
+        err instanceof Error ? err.message : "SYS_ERR: Connection to AI agent failed"
       );
     } finally {
       setLoading(false);
@@ -38,51 +37,43 @@ export function AIAdvisorCard({ summaryData }: AIAdvisorCardProps) {
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 p-6 shadow-sm hover:shadow-md transition-shadow dark:bg-gradient-to-r dark:from-indigo-900/20 dark:via-purple-900/20 dark:to-pink-900/20 dark:border-slate-700">
-      <div className="flex items-center gap-2 mb-4">
-        <Sparkles className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-          AI Financial Insight
-        </h3>
-      </div>
-
+    <div className="font-mono text-xs flex flex-col justify-between h-full bg-black">
       {!advice ? (
-        <div className="space-y-4">
-          <p className="text-sm text-slate-600 dark:text-slate-300">
-            Dapatkan insight keuangan personal dari AI Financial Advisor kami yang
-            akan menganalisis pola pengeluaran dan memberikan rekomendasi.
+        <div className="space-y-3 flex-1 flex flex-col justify-between">
+          <p className="text-slate-400 leading-relaxed">
+            Ready to deploy AI financial heuristic analyzer. Click execute below to evaluate current cash flow telemetry.
           </p>
 
+          {loading && (
+            <div className="space-y-1 bg-[#111] p-2 border border-[#222] text-[#ffb000]">
+              <div>&gt; CONNECTING SECURE_AI_TUNNEL...</div>
+              <div>&gt; PARSING SUPABASE TRANSACTION DATA...</div>
+              <div className="flex items-center gap-1.5">
+                <span className="h-2 w-2 animate-ping bg-[#ffb000] rounded-full"></span>
+                <span>&gt; RUNNING ADVISORY HEURISTICS...</span>
+              </div>
+            </div>
+          )}
+
           {error && (
-            <div className="rounded-lg bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-700 dark:text-red-300">
-              ⚠️ {error}
+            <div className="border border-[#ff4444] bg-[#3d0f0f] p-2 text-[#ff4444] font-bold">
+              [CRITICAL ERROR]: {error}
             </div>
           )}
 
           <button
             onClick={handleGetAdvice}
             disabled={loading}
-            className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2 text-sm font-medium text-white hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg"
+            className="w-full text-center border border-[#00ff66] text-[#00ff66] hover:bg-[#00ff66]/10 py-2 font-bold cursor-pointer disabled:opacity-40 disabled:hover:bg-transparent transition-colors uppercase tracking-wider"
           >
-            {loading ? (
-              <>
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                <span>Memproses...</span>
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-4 w-4" />
-                <span>Minta Saran AI</span>
-              </>
-            )}
+            {loading ? "Running Agent..." : "[ Run AI Diagnostics ]"}
           </button>
         </div>
       ) : (
-        <div className="space-y-4">
-          <div className="rounded-lg bg-white/50 dark:bg-slate-800/50 p-4 backdrop-blur-sm border border-indigo-100 dark:border-indigo-900/30">
-            <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
-              {advice}
-            </p>
+        <div className="space-y-3 flex-1 flex flex-col justify-between">
+          <div className="border border-[#333] bg-[#080808] p-3 text-slate-200 leading-relaxed max-h-[160px] overflow-y-auto terminal-scroll whitespace-pre-line text-[11px]">
+            <span className="text-[#00ff66] font-bold block mb-1">&gt; DIAGNOSTICS REPORT GENERATED:</span>
+            {advice}
           </div>
 
           <button
@@ -90,9 +81,9 @@ export function AIAdvisorCard({ summaryData }: AIAdvisorCardProps) {
               setAdvice(null);
               setError(null);
             }}
-            className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium transition-colors"
+            className="w-full text-center border border-[#ffb000] text-[#ffb000] hover:bg-[#ffb000]/10 py-1.5 font-bold cursor-pointer transition-colors uppercase tracking-wider"
           >
-            ← Kembali
+            [ Reset Terminal ]
           </button>
         </div>
       )}

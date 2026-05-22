@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Dashboard Keuangan",
+  title: "Financial Dashboard",
   description: "Financial dashboard with real-time transaction analytics",
 };
 
@@ -24,7 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="id"
+      lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       style={{ fontFamily: "-apple-system, 'SF Pro Display', 'Helvetica Neue', system-ui, sans-serif" }}
     >
