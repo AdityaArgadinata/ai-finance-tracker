@@ -83,11 +83,12 @@ export async function POST(req: NextRequest) {
 }
 
 Ketentuan:
-1. Nominal wajib berupa angka murni tanpa titik/koma (misal: 15000).
+1. Nominal wajib berupa angka murni tanpa titik/koma (misal: 15000). Jika pengguna menuliskan akhiran "k" atau "K" (seperti 25k atau 150K), artikan sebagai ribuan (kalikan dengan 1000, contoh: 25k -> 25000).
 2. Jika jenis tidak disebutkan eksplisit, gunakan logika.
 3. Kategori harus dipilih dari daftar standar di bawah ini:
    - Jika pengeluaran:
      * "Makanan & Minuman" (contoh: nasi goreng, capcay, kopi, cemilan)
+     * "Rokok" (contoh: rokok, surya, marlboro, vape, pod)
      * "Transportasi" (contoh: bensin, ojek online, parkir, tol)
      * "Belanja" (contoh: pakaian, kebutuhan bulanan, barang elektronik)
      * "Tagihan & Utilitas" (contoh: listrik, internet, pulsa, kosan)

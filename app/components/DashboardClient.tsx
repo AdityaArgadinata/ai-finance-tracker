@@ -65,7 +65,7 @@ export function DashboardClient({
   // Calculate total for percentage
   const totalExpense = categoryBreakdown.reduce((sum, item) => sum + item.nominal, 0);
 
-  const renderPieLabel = (props: any) => {
+  const renderPieLabel = (props: PieLabelEntry) => {
     const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
     const percent = props.percent || 0;
     const index = props.index || 0;
