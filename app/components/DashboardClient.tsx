@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import {
-  AreaChart,
-  Area,
+  ComposedChart,
+  Bar,
   PieChart,
   Pie,
   Cell,
@@ -16,6 +16,8 @@ import {
 } from "recharts";
 import { format, subDays } from "date-fns";
 import { translateCategory } from "@/lib/utils";
+import TradingViewChart from "./TradingViewChart";
+import TradingViewCategoryChart from "./TradingViewCategoryChart";
 
 interface TrendDataPoint {
   date: string;
@@ -71,6 +73,8 @@ export function DashboardClient({
   const [timeframe, setTimeframe] = useState<string>("1Y");
   const [isMounted, setIsMounted] = useState<boolean>(false);
   const [interval, setInterval] = useState<"weekly" | "monthly">("weekly");
+  const [chartType, setChartType] = useState<"cashflow" | "tradingview">("tradingview");
+  const [categoryChartType, setCategoryChartType] = useState<"pie" | "tradingview">("tradingview");
 
   useEffect(() => {
     const handle = setTimeout(() => {
@@ -138,17 +142,19 @@ export function DashboardClient({
   }
   intervals.reverse(); // Oldest interval first
 
-  // Get top categories
-  const topCategories = categoryBreakdown.slice(0, 3).map(c => c.kategori);
+  // Get ALL categories (not just top 3) - automatically add new ones
+  const allCategories = categoryBreakdown.map(c => c.kategori);
+  const maxCategoriesToDisplay = 10; // Limit untuk UI yang clear
+  const displayCategories = allCategories.slice(0, maxCategoriesToDisplay);
 
   // Rows definition: Name, color class, type (for lookup)
   const rows = [
-    { name: "Tren Penghematan Bersih (BI) - Median", type: "balance", color: "text-slate-400" },
-    { name: "Total Ledger Expanse Pemasukan", type: "expense", color: "text-[#00a2ff] font-bold" },
-    ...topCategories.map((cat, idx) => ({
+    { name: "Tren Penghematan Bersih (BI) - Median", type: "balance", colorValue: "#888888" },
+    { name: "Total Ledger Expanse Pengeluaran", type: "expense", colorValue: "#00a2ff" },
+    ...displayCategories.map((cat, idx) => ({
       name: translateCategory(cat),
       type: `category-${cat}`,
-      color: idx === 0 ? "text-[#00ff66]" : idx === 1 ? "text-[#ffb000]" : "text-[#ff4444]"
+      colorValue: COLORS[idx % COLORS.length]
     }))
   ];
 
@@ -204,12 +210,12 @@ export function DashboardClient({
       return { label: w.label, val };
     });
 
-    return { rowName: row.name, color: row.color, type: row.type, cells };
+    return { rowName: row.name, colorValue: row.colorValue, type: row.type, cells };
   });
 
   const renderGridCell = (val: number, type: string, key: string | number) => {
     const formatted = formatCompactVal(val, type);
-    
+
     // Style classes based on requirements:
     // positive net savings green (text-[#00ff66] bg-[#0a3311])
     // negative net savings red (text-[#ff4444] bg-[#3d0f0f])
@@ -239,71 +245,89 @@ export function DashboardClient({
     <div className="space-y-6">
       {/* Upper Charts Panel */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        
-        {/* Pemasukan vs Pengeluaran Line Chart */}
+
+        {/* Chart Panel with TradingView Option */}
         <div className="border border-[#333] bg-[#0c0c0c] p-4 font-mono min-w-0">
-          <h2 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-            <span className="w-2.5 h-2.5 bg-[#00ff66] inline-block"></span> Tren Pemasukan vs Pengeluaran
-          </h2>
-          <div className="w-full h-[280px]">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-sm font-bold text-white flex items-center gap-2">
+              <span className={`w-2.5 h-2.5 ${chartType === "tradingview" ? "bg-[#00ff66]" : "bg-[#00a2ff]"} inline-block`}></span>
+              {chartType === "tradingview" ? "Cumulative Balance" : "Grafik Arus Kas Harian (Bar)"}
+            </h2>
+            <div className="flex border border-[#333] text-xs">
+              <button
+                onClick={() => setChartType("tradingview")}
+                className={`px-2.5 py-1 font-bold transition-all border-r border-[#333] cursor-pointer ${chartType === "tradingview"
+                  ? "bg-[#e67e22] text-black"
+                  : "bg-[#111] text-[#888] hover:text-white"
+                  }`}
+              >
+                Balance
+              </button>
+              <button
+                onClick={() => setChartType("cashflow")}
+                className={`px-2.5 py-1 font-bold transition-all cursor-pointer ${chartType === "cashflow"
+                  ? "bg-[#e67e22] text-black"
+                  : "bg-[#111] text-[#888] hover:text-white"
+                  }`}
+              >
+                Cash Flow (Bar)
+              </button>
+            </div>
+          </div>
+          <div className="w-full h-[320px]">
             {isMounted ? (
-              <ResponsiveContainer width="100%" height={280} minWidth={0}>
-                <AreaChart data={filteredTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="terminalGreen" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#00ff66" stopOpacity={0.15} />
-                      <stop offset="95%" stopColor="#00ff66" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="terminalRed" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#ff4444" stopOpacity={0.15} />
-                      <stop offset="95%" stopColor="#ff4444" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid stroke="#222222" strokeDasharray="3 3" vertical={false} />
-                  <XAxis
-                    dataKey="date"
-                    tick={{ fill: "#888", fontSize: 10, fontFamily: "monospace" }}
-                    stroke="#333"
-                  />
-                  <YAxis
-                    tick={{ fill: "#888", fontSize: 10, fontFamily: "monospace" }}
-                    stroke="#333"
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#000000",
-                      border: "1px solid #555555",
-                      color: "#ffffff",
-                      fontFamily: "monospace",
-                      fontSize: "11px",
-                    }}
-                    itemStyle={{ color: "#00ff66" }}
-                    labelStyle={{ color: "#ffb000", fontWeight: "bold" }}
-                    formatter={(value) => [formatCurrency(Number(value)), ""]}
-                  />
-                  <Legend iconType="square" wrapperStyle={{ fontSize: "11px", color: "#888" }} />
-                  <Area
-                    type="monotone"
-                    dataKey="pemasukan"
-                    stroke="#00ff66"
-                    strokeWidth={2}
-                    fillOpacity={1}
-                    fill="url(#terminalGreen)"
-                    name="Pemasukan"
-                    dot={{ r: 2, fill: "#00ff66" }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="pengeluaran"
-                    stroke="#ff4444"
-                    strokeWidth={2}
-                    fillOpacity={1}
-                    fill="url(#terminalRed)"
-                    name="Pengeluaran"
-                    dot={{ r: 2, fill: "#ff4444" }}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              chartType === "tradingview" ? (
+                <TradingViewChart transactions={transactions} />
+              ) : (
+                <ResponsiveContainer width="100%" height={320} minWidth={0}>
+                  <ComposedChart data={filteredTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid stroke="#222222" strokeDasharray="3 3" vertical={false} />
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fill: "#888", fontSize: 10, fontFamily: "monospace" }}
+                      stroke="#333"
+                    />
+                    <YAxis
+                      tick={{ fill: "#888", fontSize: 10, fontFamily: "monospace" }}
+                      stroke="#333"
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#000000",
+                        border: "1px solid #555555",
+                        color: "#ffffff",
+                        fontFamily: "monospace",
+                        fontSize: "11px",
+                      }}
+                      formatter={(value) => [formatCurrency(Number(value)), ""]}
+                      labelFormatter={(label) => `Tanggal: ${label}`}
+                    />
+                    <Legend
+                      wrapperStyle={{ fontSize: "11px", color: "#888" }}
+                      verticalAlign="top"
+                      height={24}
+                    />
+
+                    {/* Bar untuk Pemasukan (hijau) */}
+                    <Bar
+                      dataKey="pemasukan"
+                      fill="#00ff66"
+                      name="Pemasukan Harian"
+                      radius={[4, 4, 0, 0]}
+                      opacity={0.8}
+                    />
+
+                    {/* Bar untuk Pengeluaran (merah) */}
+                    <Bar
+                      dataKey="pengeluaran"
+                      fill="#ff4444"
+                      name="Pengeluaran Harian"
+                      radius={[4, 4, 0, 0]}
+                      opacity={0.8}
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              )
             ) : (
               <div className="w-full h-full bg-[#0c0c0c] flex items-center justify-center text-slate-500 font-mono text-xs">
                 Memuat data tren telemetri...
@@ -312,58 +336,85 @@ export function DashboardClient({
           </div>
         </div>
 
-        {/* Expense Breakdown Pie Chart */}
+        {/* Expense Breakdown Category Chart */}
         <div className="border border-[#333] bg-[#0c0c0c] p-4 font-mono min-w-0">
-          <h2 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-            <span className="w-2.5 h-2.5 bg-[#ffb000] inline-block"></span> Rincian Pengeluaran berdasarkan Kategori
-          </h2>
-          <div className="w-full h-[280px] flex flex-col justify-center items-center">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-sm font-bold text-white flex items-center gap-2">
+              <span className={`w-2.5 h-2.5 ${categoryChartType === "tradingview" ? "bg-[#ffb000]" : "bg-[#00a2ff]"} inline-block`}></span>
+              Category Flow
+            </h2>
+            <div className="flex border border-[#333] text-xs">
+              <button
+                onClick={() => setCategoryChartType("tradingview")}
+                className={`px-2.5 py-1 font-bold transition-all border-r border-[#333] cursor-pointer ${categoryChartType === "tradingview"
+                  ? "bg-[#e67e22] text-black"
+                  : "bg-[#111] text-[#888] hover:text-white"
+                  }`}
+              >
+                FlowChart
+              </button>
+              <button
+                onClick={() => setCategoryChartType("pie")}
+                className={`px-2.5 py-1 font-bold transition-all cursor-pointer ${categoryChartType === "pie"
+                  ? "bg-[#e67e22] text-black"
+                  : "bg-[#111] text-[#888] hover:text-white"
+                  }`}
+              >
+                Pie Chart
+              </button>
+            </div>
+          </div>
+          <div className="w-full h-[320px] flex flex-col">
             {categoryBreakdown.length > 0 ? (
               isMounted ? (
-                <ResponsiveContainer width="100%" height={280} minWidth={0}>
-                  <PieChart>
-                    <Pie
-                      data={categoryBreakdown}
-                      cx="50%"
-                      cy="45%"
-                      labelLine={false}
-                      outerRadius={75}
-                      dataKey="nominal"
-                      nameKey="kategori"
-                      label={({ percent, index }: { percent?: number; index?: number }) => {
-                        const rawCat = categoryBreakdown[index ?? 0]?.kategori;
-                        const labelCat = rawCat ? translateCategory(rawCat) : "";
-                        return `${labelCat} (${((percent ?? 0) * 100).toFixed(0)}%)`;
-                      }}
-                    >
-                      {categoryBreakdown.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={COLORS[index % COLORS.length]}
-                          stroke="#000000"
-                          strokeWidth={2}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(value) => formatCurrency(Number(value))}
-                      contentStyle={{
-                        backgroundColor: "#000000",
-                        border: "1px solid #555555",
-                        color: "#ffffff",
-                        fontFamily: "monospace",
-                        fontSize: "11px",
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+                categoryChartType === "tradingview" ? (
+                  <TradingViewCategoryChart transactions={transactions} />
+                ) : (
+                  <ResponsiveContainer width="100%" height={320} minWidth={0}>
+                    <PieChart>
+                      <Pie
+                        data={categoryBreakdown}
+                        cx="50%"
+                        cy="45%"
+                        labelLine={false}
+                        outerRadius={75}
+                        dataKey="nominal"
+                        nameKey="kategori"
+                        label={({ percent, index }: { percent?: number; index?: number }) => {
+                          const rawCat = categoryBreakdown[index ?? 0]?.kategori;
+                          const labelCat = rawCat ? translateCategory(rawCat) : "";
+                          return `${labelCat} (${((percent ?? 0) * 100).toFixed(0)}%)`;
+                        }}
+                      >
+                        {categoryBreakdown.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={COLORS[index % COLORS.length]}
+                            stroke="#000000"
+                            strokeWidth={2}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value) => formatCurrency(Number(value))}
+                        contentStyle={{
+                          backgroundColor: "#000000",
+                          border: "1px solid #555555",
+                          color: "#ffffff",
+                          fontFamily: "monospace",
+                          fontSize: "11px",
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )
               ) : (
                 <div className="w-full h-full bg-[#0c0c0c] flex items-center justify-center text-slate-500 font-mono text-xs">
                   Loading breakdown data...
                 </div>
               )
             ) : (
-              <div className="text-[#888] text-xs">No expenses recorded</div>
+              <div className="text-[#888] text-xs text-center">No expenses recorded</div>
             )}
           </div>
         </div>
@@ -397,7 +448,7 @@ export function DashboardClient({
                   </div>
                   <span className="text-[#ffb000] text-xs font-bold">{percentage}%</span>
                 </div>
-                
+
                 <div className="flex items-end justify-between">
                   <div className="text-sm font-bold text-slate-200">
                     {formatCurrency(item.nominal)}
@@ -424,7 +475,7 @@ export function DashboardClient({
           <div className="text-sm font-bold text-white">
             Ringkasan Arus Kas {interval === "weekly" ? "Mingguan" : "Bulanan"} (12 {interval === "weekly" ? "Minggu" : "Bulan"} Terakhir) - Nominal IDR
           </div>
-          
+
           {/* Bloomberg styled filter dropdowns & blue timeframes */}
           <div className="flex flex-wrap items-center gap-3 mt-2 lg:mt-0 text-xs">
             {/* Filter 1 */}
@@ -452,11 +503,10 @@ export function DashboardClient({
                 <button
                   key={tf}
                   onClick={() => setTimeframe(tf)}
-                  className={`px-3 py-1 font-bold transition-all border-r last:border-0 border-[#333] ${
-                    timeframe === tf
-                      ? "bg-[#00a2ff] text-white"
-                      : "bg-[#111] text-[#888] hover:text-white"
-                  }`}
+                  className={`px-3 py-1 font-bold transition-all border-r last:border-0 border-[#333] ${timeframe === tf
+                    ? "bg-[#00a2ff] text-white"
+                    : "bg-[#111] text-[#888] hover:text-white"
+                    }`}
                 >
                   {tf}
                 </button>
@@ -471,7 +521,7 @@ export function DashboardClient({
             <thead>
               <tr className="bg-[#11] text-slate-400 border-b border-[#333]">
                 <th className="p-2 border border-[#222] w-1/4">
-                  {interval === "weekly" ? "Week Ending" : "Month Ending"}
+                  {interval === "weekly" ? "Akhir Minggu" : "Akhir Bulan"}
                 </th>
                 {intervals.map((w, idx) => (
                   <th key={idx} className="p-1.5 text-center border border-[#222] whitespace-nowrap">
@@ -483,7 +533,10 @@ export function DashboardClient({
             <tbody>
               {gridData.map((row, rowIdx) => (
                 <tr key={rowIdx} className="hover:bg-[#151515] transition-colors border-b border-[#222]">
-                  <td className={`p-2 border border-[#222] font-semibold ${row.color}`}>
+                  <td
+                    className="p-2 border border-[#222] font-semibold"
+                    style={{ color: row.colorValue }}
+                  >
                     {row.rowName}
                   </td>
                   {row.cells.map((cell, cellIdx) => renderGridCell(cell.val, row.type, cellIdx))}

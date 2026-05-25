@@ -47,3 +47,6 @@ body {
   background: #555555;
 }
 
+#tv-attr-logo {
+  display: none;
+}
