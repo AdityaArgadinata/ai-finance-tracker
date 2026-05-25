@@ -96,12 +96,27 @@ ATURAN PARSIAL NOMINAL:
 3. Contoh: "15k" → 15000, "50K" → 50000, "150000" → 150000
 
 ATURAN KATEGORI & JENIS:
-- Kategori harus dipilih dari daftar standar:
-   - Pengeluaran: "Makanan & Minuman", "Rokok", "Transportasi", "Belanja", "Tagihan & Utilitas", "Hiburan", "Kesehatan", "Pendidikan", "Lain-lain"
-   - Pemasukan: "Gaji", "Investasi", "Bisnis", "Lain-lain"
-- Jenis dideuksi dari konteks (membeli/makan = pengeluaran, menerima/dapat = pemasukan)
+- Kategori harus dipilih dari daftar standar berdasarkan contoh detail:
+   - "Makanan & Minuman": nasi, mie, kopi, teh, air, snack, kerupuk, coklat, permen, minuman bersoda
+   - "Rokok": rokok, vape, pod, tembakau
+   - "Transportasi": bensin, solar, tol, taxi, ojek, parkir, bus, kereta
+   - "Belanja": pakaian, sepatu, tas, tissue, lotion, sabun, shampoo, deodorant, sikat gigi, pasta gigi, pembalut, popok, skincare, kosmetik, barang elektronik kecil, peralatan rumah tangga minimarket
+   - "Tagihan & Utilitas": listrik, internet, pulsa, air, sewa rumah, cicilan, kartu kredit
+   - "Hiburan": bioskop, game, spotify, tiket pesawat, hotel, liburan
+   - "Kesehatan": obat, vitamin, rumah sakit, dokter, gym
+   - "Pendidikan": buku, kursus, les, tuition
+   - "Lain-lain": item lain yang tidak masuk kategori di atas
+   - Pemasukan: "Gaji" (gaji, bonus, THR, libur cuti), "Investasi" (dividen, return), "Bisnis" (penjualan, freelance), "Lain-lain"
+- Jenis dideuksi dari konteks (membeli/makan/bayar = pengeluaran, menerima/dapat/bonus = pemasukan)
 
-CONTOH PARSING:
+CONTOH PARSING BELANJA:
+- Input: "beli tissue 5k" → item="tissue", nominal=5000, kategori="Belanja"
+- Input: "beli lotion 25k" → item="lotion", nominal=25000, kategori="Belanja"
+- Input: "beli sabun mandi 8k" → item="sabun mandi", nominal=8000, kategori="Belanja"
+- Input: "beli deodorant 15k" → item="deodorant", nominal=15000, kategori="Belanja"
+- Input: "beli pasta gigi 12k" → item="pasta gigi", nominal=12000, kategori="Belanja"
+
+CONTOH PARSING LAINNYA:
 - Input: "beli nasi padang 15k" → item="nasi padang", nominal=15000, jenis="pengeluaran", kategori="Makanan & Minuman"
 - Input: "beli kopi 8k" → item="kopi", nominal=8000, jenis="pengeluaran", kategori="Makanan & Minuman"
 - Input: "gaji bulanan 5000k" → item="gaji bulanan", nominal=5000000, jenis="pemasukan", kategori="Gaji"`
