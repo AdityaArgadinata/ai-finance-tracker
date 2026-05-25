@@ -82,26 +82,29 @@ export async function POST(req: NextRequest) {
   "nominal": number
 }
 
-Aturan:
-1. Nilai nominal harus berupa angka murni tanpa titik/koma (misalnya 15000). Jika pengguna menulis akhiran "k" atau "K" (seperti 25k atau 150K), interpretasikan sebagai ribuan (kalikan dengan 1000, misalnya 25k -> 25000).
-2. Jika jenis transaksi (jenis) tidak disebutkan secara eksplisit, deduksi secara logis (misalnya, "membeli kopi" adalah pengeluaran, "menerima gaji" adalah pemasukan).
-3. Kategori (kategori) harus dipilih dari daftar standar di bawah:
-   - Untuk pengeluaran (expenses):
-     * "Makanan & Minuman" (misalnya makanan, minuman, kopi, camilan, hidangan)
-     * "Rokok" (misalnya rokok, vape, pod)
-     * "Transportasi" (misalnya bensin/gas, taksi, ride-sharing, tol, parkir)
-     * "Belanja" (misalnya pakaian, belanja groceries, elektronik)
-     * "Tagihan & Utilitas" (misalnya listrik, internet, pulsa, sewa)
-     * "Hiburan" (misalnya bioskop, game, travel/liburan)
-     * "Kesehatan" (misalnya obat, rumah sakit, gym)
-     * "Pendidikan" (misalnya buku, kursus)
-     * "Lain-lain" (jika tidak sesuai yang di atas)
-   - Untuk pemasukan (income):
-     * "Gaji" (misalnya gaji bulanan, bonus, THR)
-     * "Investasi" (misalnya keuntungan reksa dana, dividen)
-     * "Bisnis" (misalnya penjualan, proyek sampingan)
-     * "Lain-lain" (jika tidak sesuai yang di atas)
-4. Item harus berupa deskripsi singkat tentang item/aktivitas (misalnya "kopi", "bensin").`
+ATURAN EKSTRAKSI ITEM:
+- Item HARUS menjadi nama produk/layanan spesifik (misalnya: "nasi padang", "bensin", "kopi", "pulsa")
+- JANGAN gunakan kata kerja (beli, makan, ambil, bayar, kirim, terima, dll)
+- JANGAN gunakan preposisi (ke, dari, di, untuk, dengan, dll)
+- Jika ada "beli nasi padang 15k", ekstrak item="nasi padang" BUKAN "makan"
+- Jika ada "minum kopi 5k", ekstrak item="kopi" BUKAN "minum"
+- Jika ada "bensin motor 50k", ekstrak item="bensin motor" atau "bensin"
+
+ATURAN PARSIAL NOMINAL:
+1. Nilai nominal harus berupa angka murni tanpa titik/koma/spasi (misalnya 15000, bukan 15.000)
+2. Jika ada "k" atau "K" di akhir (25k, 150K), kalikan dengan 1000
+3. Contoh: "15k" → 15000, "50K" → 50000, "150000" → 150000
+
+ATURAN KATEGORI & JENIS:
+- Kategori harus dipilih dari daftar standar:
+   - Pengeluaran: "Makanan & Minuman", "Rokok", "Transportasi", "Belanja", "Tagihan & Utilitas", "Hiburan", "Kesehatan", "Pendidikan", "Lain-lain"
+   - Pemasukan: "Gaji", "Investasi", "Bisnis", "Lain-lain"
+- Jenis dideuksi dari konteks (membeli/makan = pengeluaran, menerima/dapat = pemasukan)
+
+CONTOH PARSING:
+- Input: "beli nasi padang 15k" → item="nasi padang", nominal=15000, jenis="pengeluaran", kategori="Makanan & Minuman"
+- Input: "beli kopi 8k" → item="kopi", nominal=8000, jenis="pengeluaran", kategori="Makanan & Minuman"
+- Input: "gaji bulanan 5000k" → item="gaji bulanan", nominal=5000000, jenis="pemasukan", kategori="Gaji"`
         },
         { role: "user", content: msg.text },
       ],
