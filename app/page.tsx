@@ -278,10 +278,10 @@ export default async function Home({
         {/* Title Block */}
         <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-[#333] pb-2">
           <h1 className="text-lg font-bold text-white tracking-tight">
-            Financial Telemetry Summary - Expanse Financials
+            Ringkasan Telemetri Keuangan - Keuangan Expanse
           </h1>
           <div className="text-[#888] text-xs mt-1 md:mt-0 flex items-center gap-1.5">
-            Data up to {format(anchorDate, "yyyy-MM-dd")} <span className="cursor-pointer text-white border border-[#555] rounded-full w-3.5 h-3.5 flex items-center justify-center text-[10px]" title="Expanse DB Telemetry Info">i</span> About the Data
+            Data hingga {format(anchorDate, "yyyy-MM-dd")} <span className="cursor-pointer text-white border border-[#555] rounded-full w-3.5 h-3.5 flex items-center justify-center text-[10px]" title="Info Telemetri DB Expanse">i</span> Tentang Data
           </div>
         </div>
 
@@ -294,19 +294,19 @@ export default async function Home({
               <thead>
                 <tr className="bg-[#111111] text-slate-400 border-b border-[#333]">
                   <th className="p-2 font-mono font-medium border-r border-[#222] w-[28%]">
-                    Monthly Cash Flow Comparison
+                    Perbandingan Arus Kas Bulanan
                   </th>
                   <th className="p-2 text-right font-mono font-medium border-r border-[#222] w-[18%]">
-                    {format(currentMonthStart, "MMM yyyy")} (Current)
+                    {format(currentMonthStart, "MMM yyyy")} (Saat Ini)
                   </th>
                   <th className="p-2 text-right font-mono font-medium border-r border-[#222] w-[18%]">
                     {format(prevMonthStart, "MMM yyyy")} (Prev)
                   </th>
                   <th className="p-2 text-right font-mono font-medium border-r border-[#222] w-[18%]">
-                    Nominal Change
+                    Perubahan Nominal
                   </th>
                   <th className="p-2 text-center font-mono font-medium w-[18%]">
-                    Change %
+                    Perubahan %
                   </th>
                 </tr>
               </thead>
@@ -314,22 +314,22 @@ export default async function Home({
                 {/* Expanse Telemetry Core Section */}
                 <tr className="bg-[#050505]">
                   <td colSpan={5} className="px-2 py-1.5 text-[#ffb000] font-bold border-b border-[#222]">
-                    Expanse Telemetry Core
+                    Inti Telemetri Expanse
                   </td>
                 </tr>
 
-                {/* Recorded Inflow */}
+                {/* Pemasukan Tercatat */}
                 <tr className="hover:bg-[#1a1a1a] transition-colors">
                   <td className="p-2 border border-[#222] font-semibold text-slate-200">
-                    <span className="text-[#00ff66] mr-1.5">●</span> Recorded Inflow
+                    <span className="text-[#00ff66] mr-1.5">●</span> Pemasukan Tercatat
                   </td>
                   {renderCells(currM.income, prevM.income, "currency")}
                 </tr>
 
-                {/* Recorded Outflow */}
+                {/* Pengeluaran Tercatat */}
                 <tr className="hover:bg-[#1a1a1a] transition-colors">
                   <td className="p-2 border border-[#222] font-semibold text-slate-200">
-                    <span className="text-[#ff4444] mr-1.5">●</span> Recorded Outflow
+                    <span className="text-[#ff4444] mr-1.5">●</span> Pengeluaran Tercatat
                   </td>
                   {renderCells(currM.expense, prevM.expense, "currency", true)}
                 </tr>
@@ -353,7 +353,7 @@ export default async function Home({
                 {/* Average Transaction Value */}
                 <tr className="hover:bg-[#1a1a1a] transition-colors">
                   <td className="p-2 border border-[#222] font-semibold text-slate-200">
-                    <span className="text-slate-400 mr-1.5">●</span> Recorded Mean Value
+                    <span className="text-slate-400 mr-1.5">●</span> Nilai Rata-Rata Tercatat
                   </td>
                   {renderCells(currM.avgTx, prevM.avgTx, "currency")}
                 </tr>
@@ -361,7 +361,7 @@ export default async function Home({
                 {/* Transaction Frequency */}
                 <tr className="hover:bg-[#1a1a1a] transition-colors">
                   <td className="p-2 border border-[#222] font-semibold text-slate-200">
-                    <span className="text-slate-400 mr-1.5">●</span> Recorded Transaction Volume
+                    <span className="text-slate-400 mr-1.5">●</span> Volume Transaksi Tercatat
                   </td>
                   {renderCells(currM.count, prevM.count, "number")}
                 </tr>
@@ -369,14 +369,14 @@ export default async function Home({
                 {/* Category-Level Spend Section */}
                 <tr className="bg-[#050505]">
                   <td colSpan={5} className="px-2 py-1.5 text-[#ffb000] font-bold border-b border-[#222]">
-                    Category Metrics
+                    Metrik Kategori
                   </td>
                 </tr>
 
                 {/* Recorded Top Category Outflow */}
                 <tr className="hover:bg-[#1a1a1a] transition-colors">
                   <td className="p-2 border border-[#222] font-semibold text-slate-200">
-                    <span className="text-[#e67e22] mr-1.5">●</span> Recorded Top Category Outflow
+                    <span className="text-[#e67e22] mr-1.5">●</span> Pengeluaran Kategori Top Tercatat
                   </td>
                   {renderCells(currM.maxCatSpend, prevM.maxCatSpend, "currency", true)}
                 </tr>
@@ -389,22 +389,22 @@ export default async function Home({
             {/* Box 1 */}
             <div className="border border-[#333] bg-[#0c0c0c] p-4 text-xs font-mono">
               <div className="flex justify-between items-center text-[#ffb000] font-bold mb-2">
-                <span>Expanse Telemetry Core:</span>
+                <span>Inti Telemetri Expanse:</span>
                 <span className="border border-[#555] px-1 hover:bg-[#222] cursor-pointer">?</span>
               </div>
               <ul className="space-y-1 text-slate-300">
-                <li><span className="text-slate-400 font-bold">Source:</span> Supabase Realtime Telemetry</li>
-                <li><span className="text-slate-400 font-bold">Scope:</span> Personal Income & Expense Log</li>
-                <li><span className="text-slate-400 font-bold">Volume:</span> {allTransactions.length} Registered Tx</li>
-                <li><span className="text-slate-400 font-bold">Currency:</span> IDR (Rp)</li>
-                <li><span className="text-slate-400 font-bold">Terminal Link:</span> SECM &lt;GO&gt;</li>
+                <li><span className="text-slate-400 font-bold">Sumber:</span> Telemetri Real-time Supabase</li>
+                <li><span className="text-slate-400 font-bold">Ruang Lingkup:</span> Log Pemasukan & Pengeluaran Pribadi</li>
+                <li><span className="text-slate-400 font-bold">Volume:</span> {allTransactions.length} Tx Terdaftar</li>
+                <li><span className="text-slate-400 font-bold">Mata Uang:</span> IDR (Rp)</li>
+                <li><span className="text-slate-400 font-bold">Link Terminal:</span> SECM &lt;GO&gt;</li>
               </ul>
             </div>
 
             {/* AI Advisor Panel (Box 2) */}
             <div className="border border-[#333] bg-[#0c0c0c] p-4 text-xs font-mono flex-1 flex flex-col justify-between mt-0 xl:mt-2">
               <div className="flex justify-between items-center text-[#ffb000] font-bold mb-2">
-                <span>Expanse AI Advisor:</span>
+                <span>Penasihat AI Expanse:</span>
                 <span className="border border-[#555] px-1 hover:bg-[#222] cursor-pointer">?</span>
               </div>
               <AIAdvisorCard
@@ -424,7 +424,7 @@ export default async function Home({
         {/* Date Filters Area */}
         <section className="bg-black border border-[#333] p-4">
           <div className="text-slate-400 text-xs uppercase tracking-wider font-bold mb-2">
-            Terminal Filters
+            Filter Terminal
           </div>
           <DateRangeFilter />
         </section>

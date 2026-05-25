@@ -93,7 +93,7 @@ export function DateRangeFilter({ onFiltered }: DateRangeFilterProps) {
                 : "border-[#333] bg-[#111] text-slate-300 hover:text-white"
             }`}
           >
-            [ 7 Days ]
+            [ 7 Hari ]
           </button>
           <button
             onClick={handleLast30Days}
@@ -103,14 +103,14 @@ export function DateRangeFilter({ onFiltered }: DateRangeFilterProps) {
                 : "border-[#333] bg-[#111] text-slate-300 hover:text-white"
             }`}
           >
-            [ 30 Days ]
+            [ 30 Hari ]
           </button>
         </div>
 
         {/* Start Date */}
         <div>
           <label className="block text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wide">
-            Start Date (From)
+            Tanggal Mulai (Dari)
           </label>
           <input
             type="date"
@@ -123,7 +123,7 @@ export function DateRangeFilter({ onFiltered }: DateRangeFilterProps) {
         {/* End Date */}
         <div>
           <label className="block text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wide">
-            End Date (To)
+            Tanggal Akhir (Ke)
           </label>
           <input
             type="date"
@@ -140,7 +140,7 @@ export function DateRangeFilter({ onFiltered }: DateRangeFilterProps) {
             disabled={!startDate || !endDate}
             className="flex-1 h-full font-bold border border-[#00ff66] text-[#00ff66] hover:bg-[#00ff66]/10 cursor-pointer disabled:opacity-40 disabled:hover:bg-transparent transition-all"
           >
-            [ Apply ]
+            [ Terapkan ]
           </button>
           {hasActiveFilter && (
             <button
@@ -148,7 +148,7 @@ export function DateRangeFilter({ onFiltered }: DateRangeFilterProps) {
               className="px-2.5 h-full font-bold border border-[#ff4444] text-[#ff4444] hover:bg-[#ff4444]/10 cursor-pointer transition-all flex items-center justify-center gap-1"
             >
               <X className="h-3 w-3" />
-              <span>Clear</span>
+              <span>Hapus</span>
             </button>
           )}
         </div>
@@ -157,13 +157,13 @@ export function DateRangeFilter({ onFiltered }: DateRangeFilterProps) {
       {/* Active Filter Badge */}
       {hasActiveFilter && (
         <div className="flex items-center gap-2 text-[10px] text-[#ffb000]">
-          <span>&gt; ACTIVE DATE RANGE LIMIT:</span>
+          <span>&gt; BATAS RENTANG TANGGAL AKTIF:</span>
           {startDate && (
             <span className="underline">
               {format(new Date(startDate), "dd MMM yyyy")}
             </span>
           )}
-          {startDate && endDate && <span>TO</span>}
+          {startDate && endDate && <span>KE</span>}
           {endDate && (
             <span className="underline">
               {format(new Date(endDate), "dd MMM yyyy")}

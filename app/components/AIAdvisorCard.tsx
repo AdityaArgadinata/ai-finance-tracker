@@ -29,7 +29,7 @@ export function AIAdvisorCard({ summaryData }: AIAdvisorCardProps) {
       setAdvice(result);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "SYS_ERR: Connection to AI agent failed"
+        err instanceof Error ? err.message : "KESALAHAN SYS: Koneksi ke agen AI gagal"
       );
     } finally {
       setLoading(false);
@@ -41,23 +41,23 @@ export function AIAdvisorCard({ summaryData }: AIAdvisorCardProps) {
       {!advice ? (
         <div className="space-y-3 flex-1 flex flex-col justify-between">
           <p className="text-slate-400 leading-relaxed">
-            Ready to deploy AI financial heuristic analyzer. Click execute below to evaluate current cash flow telemetry.
+            Siap menjalankan penganalisis heuristik keuangan AI. Klik jalankan di bawah untuk mengevaluasi telemetri arus kas saat ini.
           </p>
 
           {loading && (
             <div className="space-y-1 bg-[#111] p-2 border border-[#222] text-[#ffb000]">
-              <div>&gt; CONNECTING SECURE_AI_TUNNEL...</div>
-              <div>&gt; PARSING SUPABASE TRANSACTION DATA...</div>
+              <div>&gt; MENGHUBUNGKAN TEROWONGAN_AI_AMAN...</div>
+              <div>&gt; MENGURAI DATA TRANSAKSI SUPABASE...</div>
               <div className="flex items-center gap-1.5">
                 <span className="h-2 w-2 animate-ping bg-[#ffb000] rounded-full"></span>
-                <span>&gt; RUNNING ADVISORY HEURISTICS...</span>
+                <span>&gt; MENJALANKAN HEURISTIK PENASIHAT...</span>
               </div>
             </div>
           )}
 
           {error && (
             <div className="border border-[#ff4444] bg-[#3d0f0f] p-2 text-[#ff4444] font-bold">
-              [CRITICAL ERROR]: {error}
+              [KESALAHAN KRITIS]: {error}
             </div>
           )}
 
@@ -66,13 +66,13 @@ export function AIAdvisorCard({ summaryData }: AIAdvisorCardProps) {
             disabled={loading}
             className="w-full text-center border border-[#00ff66] text-[#00ff66] hover:bg-[#00ff66]/10 py-2 font-bold cursor-pointer disabled:opacity-40 disabled:hover:bg-transparent transition-colors uppercase tracking-wider"
           >
-            {loading ? "Running Agent..." : "[ Run AI Diagnostics ]"}
+            {loading ? "Menjalankan Agen..." : "[ Jalankan Diagnosa AI ]"}
           </button>
         </div>
       ) : (
         <div className="space-y-3 flex-1 flex flex-col justify-between">
           <div className="border border-[#333] bg-[#080808] p-3 text-slate-200 leading-relaxed max-h-[160px] overflow-y-auto terminal-scroll whitespace-pre-line text-[11px]">
-            <span className="text-[#00ff66] font-bold block mb-1">&gt; DIAGNOSTICS REPORT GENERATED:</span>
+            <span className="text-[#00ff66] font-bold block mb-1">&gt; LAPORAN DIAGNOSA DIHASILKAN:</span>
             {advice}
           </div>
 
@@ -83,7 +83,7 @@ export function AIAdvisorCard({ summaryData }: AIAdvisorCardProps) {
             }}
             className="w-full text-center border border-[#ffb000] text-[#ffb000] hover:bg-[#ffb000]/10 py-1.5 font-bold cursor-pointer transition-colors uppercase tracking-wider"
           >
-            [ Reset Terminal ]
+            [ Setel Ulang Terminal ]
           </button>
         </div>
       )}

@@ -1,7 +1,6 @@
 "use server";
 
 import Groq from "groq-sdk";
-import { translateCategory } from "@/lib/utils";
 
 interface SummaryData {
   totalIncome: number;
@@ -19,18 +18,18 @@ export async function getFinancialAdvice(summaryData: SummaryData): Promise<stri
     apiKey: process.env.GROQ_API_KEY,
   });
 
-  // Translate top categories for the AI context so the advisor can discuss them in English
+  // Use top categories directly without translation
   const translatedSummary = {
     ...summaryData,
     topCategories: summaryData.topCategories.map((c) => ({
-      category: translateCategory(c.kategori),
+      category: c.kategori,
       amount: c.nominal,
     })),
   };
 
-  const systemPrompt = `You are a friendly, professional, and smart personal financial advisor. Analyze the summary of the user's financial telemetry data (provided in JSON). Provide a brief insight of maximum 3 sentences. Congratulate them if they have positive cash flow / solid remaining balance, and provide a gentle warning if expenses are too high (burn rate approaching/exceeding 100%). Keep your tone casual but professional in English. Do not repeat raw numbers stiffly; use percentages or relative comparisons.`;
+  const systemPrompt = `Anda adalah penasihat keuangan pribadi yang ramah, profesional, dan cerdas. Analisis ringkasan data telemetri keuangan pengguna (disediakan dalam JSON). Berikan wawasan singkat maksimal 3 kalimat. Berikan selamat jika mereka memiliki arus kas positif / saldo yang solid, dan berikan peringatan lembut jika pengeluaran terlalu tinggi (burn rate mendekati/melebihi 100%). Pertahankan nada kasual namun profesional dalam bahasa Indonesia. Jangan ulangi angka mentah dengan kaku; gunakan persentase atau perbandingan relatif.`;
 
-  const userMessage = `This month's financial data: ${JSON.stringify(translatedSummary, null, 2)}`;
+  const userMessage = `Data keuangan bulan ini: ${JSON.stringify(translatedSummary, null, 2)}`;
 
   try {
     const message = await groq.chat.completions.create({

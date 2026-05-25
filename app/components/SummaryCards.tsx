@@ -39,14 +39,14 @@ export function SummaryCards({
       <div className="border border-[#333] bg-[#0c0c0c] p-4 flex flex-col justify-between hover:border-[#444] transition-all">
         <div>
           <p className="text-slate-400 font-bold uppercase tracking-wider">
-            Total Balance
+            Total Saldo
           </p>
           <p className={`mt-2 text-2xl font-black ${balanceColor}`}>
             {formatCurrency(totalBalance)}
           </p>
         </div>
         <p className="mt-4 text-[10px] text-slate-500">
-          * CURRENT NET POSITION
+          * POSISI BERSIH SAAT INI
         </p>
       </div>
 
@@ -54,14 +54,14 @@ export function SummaryCards({
       <div className="border border-[#333] bg-[#0c0c0c] p-4 flex flex-col justify-between hover:border-[#444] transition-all">
         <div>
           <p className="text-slate-400 font-bold uppercase tracking-wider">
-            Total Inflow
+            Total Pemasukan
           </p>
           <p className="mt-2 text-2xl font-black text-[#00ff66]">
             {formatCurrency(totalIncome)}
           </p>
         </div>
         <p className="mt-4 text-[10px] text-slate-500">
-          * SUMMED GROSS RECEIPTS
+          * TOTAL PENERIMAAN KOTOR
         </p>
       </div>
 
@@ -69,14 +69,14 @@ export function SummaryCards({
       <div className="border border-[#333] bg-[#0c0c0c] p-4 flex flex-col justify-between hover:border-[#444] transition-all">
         <div>
           <p className="text-slate-400 font-bold uppercase tracking-wider">
-            Total Outflow
+            Total Pengeluaran
           </p>
           <p className="mt-2 text-2xl font-black text-[#ff4444]">
             {formatCurrency(totalExpense)}
           </p>
         </div>
         <p className="mt-4 text-[10px] text-slate-500">
-          * AGGREGATE DEBIT OUTFLOWS
+          * TOTAL PENGELUARAN DEBIT
         </p>
       </div>
 
@@ -84,19 +84,19 @@ export function SummaryCards({
       <div className="border border-[#333] bg-[#0c0c0c] p-4 flex flex-col justify-between hover:border-[#444] transition-all">
         <div>
           <p className="text-slate-400 font-bold uppercase tracking-wider">
-            Burn Rate Indicator
+            Indikator Tingkat Pembakaran
           </p>
           <div className="flex items-center gap-2 mt-2">
             <span className={`text-2xl font-black ${burnRateColor.textClass}`}>
               {burnRate.toFixed(1)}%
             </span>
             <span className={`px-1.5 py-0.5 text-[10px] font-bold ${burnRateColor.bgClass} ${burnRateColor.textClass}`}>
-              {burnRate <= 50 ? "SAFE" : burnRate <= 80 ? "WARN" : "RISK"}
+              {burnRate <= 50 ? "AMAN" : burnRate <= 80 ? "PERINGATAN" : "RISIKO"}
             </span>
           </div>
         </div>
         <p className="mt-4 text-[10px] text-slate-500">
-          * EXPENSE VS INCOME RATIO
+          * RASIO PENGELUARAN VS PEMASUKAN
         </p>
       </div>
 

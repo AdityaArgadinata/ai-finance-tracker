@@ -34,10 +34,10 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
     <div className="font-mono text-xs border border-[#333] bg-[#0c0c0c]">
       <div className="border-b border-[#333] px-4 py-2.5 bg-[#111] flex justify-between items-center">
         <h2 className="font-bold text-[#ffb000] uppercase tracking-wider">
-          Transaction Ledger List
+          Daftar Buku Transaksi
         </h2>
         <span className="text-[10px] text-slate-400 font-bold">
-          TOTAL ACTIVE RECORDS: {transactions.length}
+          TOTAL REKAMAN AKTIF: {transactions.length}
         </span>
       </div>
 
@@ -46,19 +46,19 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
           <thead>
             <tr className="bg-[#151515] text-slate-400 border-b border-[#333]">
               <th className="px-4 py-2 font-bold border-r border-[#222] w-1/4">
-                Timestamp
+                Waktu Pencatat
               </th>
               <th className="px-4 py-2 font-bold border-r border-[#222] w-1/4">
-                Item / Description
+                Item / Deskripsi
               </th>
               <th className="px-4 py-2 font-bold border-r border-[#222] w-1/6">
-                Category
+                Kategori
               </th>
               <th className="px-4 py-2 font-bold border-r border-[#222] w-1/6">
-                Type
+                Jenis
               </th>
               <th className="px-4 py-2 font-bold text-right w-1/6">
-                Value (IDR)
+                Nilai (IDR)
               </th>
             </tr>
           </thead>
@@ -87,7 +87,7 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
                         : "text-[#ff4444]"
                     }`}
                   >
-                    {tx.jenis === "pemasukan" ? "INFLOW" : "OUTFLOW"}
+                    {tx.jenis === "pemasukan" ? "PEMASUKAN" : "PENGELUARAN"}
                   </span>
                 </td>
                 <td

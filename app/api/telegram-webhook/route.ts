@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Groq from "groq-sdk";
 import { createClient } from "@supabase/supabase-js";
-import { translateCategory } from "@/lib/utils";
 
 // ── Types ────────────────────────────────────────────
 interface TelegramMessage {
@@ -75,7 +74,7 @@ export async function POST(req: NextRequest) {
       messages: [
         {
           role: "system",
-          content: `You are a financial assistant that extracts transactions from user chat messages into JSON format:
+          content: `Anda adalah asisten keuangan yang mengekstrak transaksi dari pesan obrolan pengguna ke format JSON:
 {
   "jenis": "pemasukan" | "pengeluaran",
   "kategori": string,
@@ -83,26 +82,26 @@ export async function POST(req: NextRequest) {
   "nominal": number
 }
 
-Rules:
-1. The nominal value must be a pure number without dots/commas (e.g., 15000). If the user writes a suffix "k" or "K" (like 25k or 150K), interpret it as thousands (multiply by 1000, e.g., 25k -> 25000).
-2. If the transaction type (jenis) is not explicitly mentioned, deduce it logically (e.g., "bought coffee" is pengeluaran, "received salary" is pemasukan).
-3. The category (kategori) must be chosen from the standard list below:
-   - For pengeluaran (expenses):
-     * "Makanan & Minuman" (e.g., food, drinks, coffee, snacks, meals)
-     * "Rokok" (e.g., cigarettes, vape, pod)
-     * "Transportasi" (e.g., petrol/gas, taxi, ride-sharing, tolls, parking)
-     * "Belanja" (e.g., clothing, grocery shopping, electronics)
-     * "Tagihan & Utilitas" (e.g., electricity, internet, phone credit, rent)
-     * "Hiburan" (e.g., cinema, games, travel/holidays)
-     * "Kesehatan" (e.g., medicine, hospital, gym)
-     * "Pendidikan" (e.g., books, courses)
-     * "Lain-lain" (if it doesn't fit any above)
-   - For pemasukan (income):
-     * "Gaji" (e.g., monthly salary, bonus, THR)
-     * "Investasi" (e.g., mutual fund gains, dividends)
-     * "Bisnis" (e.g., sales, side project)
-     * "Lain-lain" (if it doesn't fit any above)
-4. The item must be a short description of the item/activity (e.g., "coffee", "petrol").`
+Aturan:
+1. Nilai nominal harus berupa angka murni tanpa titik/koma (misalnya 15000). Jika pengguna menulis akhiran "k" atau "K" (seperti 25k atau 150K), interpretasikan sebagai ribuan (kalikan dengan 1000, misalnya 25k -> 25000).
+2. Jika jenis transaksi (jenis) tidak disebutkan secara eksplisit, deduksi secara logis (misalnya, "membeli kopi" adalah pengeluaran, "menerima gaji" adalah pemasukan).
+3. Kategori (kategori) harus dipilih dari daftar standar di bawah:
+   - Untuk pengeluaran (expenses):
+     * "Makanan & Minuman" (misalnya makanan, minuman, kopi, camilan, hidangan)
+     * "Rokok" (misalnya rokok, vape, pod)
+     * "Transportasi" (misalnya bensin/gas, taksi, ride-sharing, tol, parkir)
+     * "Belanja" (misalnya pakaian, belanja groceries, elektronik)
+     * "Tagihan & Utilitas" (misalnya listrik, internet, pulsa, sewa)
+     * "Hiburan" (misalnya bioskop, game, travel/liburan)
+     * "Kesehatan" (misalnya obat, rumah sakit, gym)
+     * "Pendidikan" (misalnya buku, kursus)
+     * "Lain-lain" (jika tidak sesuai yang di atas)
+   - Untuk pemasukan (income):
+     * "Gaji" (misalnya gaji bulanan, bonus, THR)
+     * "Investasi" (misalnya keuntungan reksa dana, dividen)
+     * "Bisnis" (misalnya penjualan, proyek sampingan)
+     * "Lain-lain" (jika tidak sesuai yang di atas)
+4. Item harus berupa deskripsi singkat tentang item/aktivitas (misalnya "kopi", "bensin").`
         },
         { role: "user", content: msg.text },
       ],
@@ -118,7 +117,7 @@ Rules:
 
     // 2. Validate required fields
     if (!parsed.jenis || !parsed.kategori || !parsed.item || !parsed.nominal) {
-      await replyTelegram(chatId, "❌ Format unrecognized. Please try again.");
+      await replyTelegram(chatId, "❌ Format tidak dikenali. Silakan coba lagi.");
       return NextResponse.json({ ok: true }, { status: 200 });
     }
 
@@ -133,15 +132,15 @@ Rules:
 
     if (dbError) {
       console.error("Supabase insert error:", dbError);
-      await replyTelegram(chatId, "❌ Failed to save to database.");
+      await replyTelegram(chatId, "❌ Gagal menyimpan ke database.");
       return NextResponse.json({ ok: true }, { status: 200 });
     }
 
     // 4. Reply success
     const replyText = [
-      "✅ Successfully recorded!",
-      `🔹 Type: ${parsed.jenis === "pemasukan" ? "INFLOW" : "OUTFLOW"}`,
-      `🔹 Category: ${translateCategory(parsed.kategori)}`,
+      "✅ Berhasil dicatat!",
+      `🔹 Jenis: ${parsed.jenis === "pemasukan" ? "PEMASUKAN" : "PENGELUARAN"}`,
+      `🔹 Kategori: ${parsed.kategori}`,
       `🔹 Item: ${parsed.item}`,
       `🔹 Nominal: Rp ${formatRupiah(parsed.nominal)}`,
     ].join("\n");

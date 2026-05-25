@@ -143,8 +143,8 @@ export function DashboardClient({
 
   // Rows definition: Name, color class, type (for lookup)
   const rows = [
-    { name: "Net Savings Trend (BI) - Median", type: "balance", color: "text-slate-400" },
-    { name: "Total Expanse Ledger Inc", type: "expense", color: "text-[#00a2ff] font-bold" },
+    { name: "Tren Penghematan Bersih (BI) - Median", type: "balance", color: "text-slate-400" },
+    { name: "Total Ledger Expanse Pemasukan", type: "expense", color: "text-[#00a2ff] font-bold" },
     ...topCategories.map((cat, idx) => ({
       name: translateCategory(cat),
       type: `category-${cat}`,
@@ -243,7 +243,7 @@ export function DashboardClient({
         {/* Pemasukan vs Pengeluaran Line Chart */}
         <div className="border border-[#333] bg-[#0c0c0c] p-4 font-mono min-w-0">
           <h2 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-            <span className="w-2.5 h-2.5 bg-[#00ff66] inline-block"></span> Inflow vs Outflow Trend
+            <span className="w-2.5 h-2.5 bg-[#00ff66] inline-block"></span> Tren Pemasukan vs Pengeluaran
           </h2>
           <div className="w-full h-[280px]">
             {isMounted ? (
@@ -289,7 +289,7 @@ export function DashboardClient({
                     strokeWidth={2}
                     fillOpacity={1}
                     fill="url(#terminalGreen)"
-                    name="Inflow"
+                    name="Pemasukan"
                     dot={{ r: 2, fill: "#00ff66" }}
                   />
                   <Area
@@ -299,14 +299,14 @@ export function DashboardClient({
                     strokeWidth={2}
                     fillOpacity={1}
                     fill="url(#terminalRed)"
-                    name="Outflow"
+                    name="Pengeluaran"
                     dot={{ r: 2, fill: "#ff4444" }}
                   />
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
               <div className="w-full h-full bg-[#0c0c0c] flex items-center justify-center text-slate-500 font-mono text-xs">
-                Loading telemetry trend data...
+                Memuat data tren telemetri...
               </div>
             )}
           </div>
@@ -315,7 +315,7 @@ export function DashboardClient({
         {/* Expense Breakdown Pie Chart */}
         <div className="border border-[#333] bg-[#0c0c0c] p-4 font-mono min-w-0">
           <h2 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-            <span className="w-2.5 h-2.5 bg-[#ffb000] inline-block"></span> Expense Breakdown by Category
+            <span className="w-2.5 h-2.5 bg-[#ffb000] inline-block"></span> Rincian Pengeluaran berdasarkan Kategori
           </h2>
           <div className="w-full h-[280px] flex flex-col justify-center items-center">
             {categoryBreakdown.length > 0 ? (
@@ -373,7 +373,7 @@ export function DashboardClient({
       {/* Rincian List Table (Grid) */}
       <div className="border border-[#333] bg-[#0c0c0c] p-4 font-mono">
         <h2 className="text-sm font-bold text-white mb-4">
-          Expense Details by Category
+          Rincian Pengeluaran berdasarkan Kategori
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {categoryBreakdown.map((item, index) => {
@@ -422,16 +422,16 @@ export function DashboardClient({
       <div className="border border-[#333] bg-[#0c0c0c] p-4 font-mono">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-[#333] pb-3 mb-4">
           <div className="text-sm font-bold text-white">
-            {interval === "weekly" ? "Weekly" : "Monthly"} Cash Flow Summary (Last 12 {interval === "weekly" ? "Weeks" : "Months"}) - Nominal IDR
+            Ringkasan Arus Kas {interval === "weekly" ? "Mingguan" : "Bulanan"} (12 {interval === "weekly" ? "Minggu" : "Bulan"} Terakhir) - Nominal IDR
           </div>
           
           {/* Bloomberg styled filter dropdowns & blue timeframes */}
           <div className="flex flex-wrap items-center gap-3 mt-2 lg:mt-0 text-xs">
             {/* Filter 1 */}
             <div className="flex items-center gap-1">
-              <span className="text-slate-400">Comp Source</span>
+              <span className="text-slate-400">Sumber Komparasi</span>
               <span className="bg-[#e67e22] text-black px-2 py-0.5 font-bold cursor-pointer">
-                Expanse Realtime
+                Expanse Real-time
               </span>
             </div>
 
@@ -442,7 +442,7 @@ export function DashboardClient({
                 onClick={() => setInterval(prev => prev === "weekly" ? "monthly" : "weekly")}
                 className="bg-[#e67e22] text-black px-2 py-0.5 font-bold cursor-pointer uppercase border-0 font-mono"
               >
-                {interval}
+                {interval === "weekly" ? "Mingguan" : "Bulanan"}
               </button>
             </div>
 
