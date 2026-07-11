@@ -103,24 +103,24 @@ export default function TradingViewChart({ transactions }: TradingViewChartProps
       width: initialWidth,
       height: 320,
       layout: {
-        background: { type: ColorType.Solid, color: "#0c0c0c" },
-        textColor: "#888888",
-        fontFamily: "monospace",
+        background: { type: ColorType.Solid, color: "#202020" },
+        textColor: "#8b8b8b",
+        fontFamily: "system-ui",
         fontSize: 11,
       },
       grid: {
-        vertLines: { color: "#222222", style: LineStyle.Dotted },
-        horzLines: { color: "#222222", style: LineStyle.Dotted },
+        vertLines: { color: "#303030", style: LineStyle.Dotted },
+        horzLines: { color: "#303030", style: LineStyle.Dotted },
       },
       rightPriceScale: {
-        borderColor: "#333333",
+        borderColor: "#303030",
         scaleMargins: {
           top: 0.1,
           bottom: 0.25, // Leave space for volume histogram at bottom
         },
       },
       timeScale: {
-        borderColor: "#333333",
+        borderColor: "#303030",
         fixLeftEdge: true,
         fixRightEdge: true,
       },
@@ -321,8 +321,8 @@ export default function TradingViewChart({ transactions }: TradingViewChartProps
           position: "absolute",
           zIndex: 50,
           pointerEvents: "none",
-          backgroundColor: "#050505",
-          border: "1px solid #333333",
+          backgroundColor: "#292929",
+          border: "1px solid #3a3a3a",
           borderRadius: "3px",
           padding: "6px 10px",
           boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.5)",

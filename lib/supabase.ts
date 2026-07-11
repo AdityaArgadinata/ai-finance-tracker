@@ -33,4 +33,3 @@ export async function getTransactions(): Promise<Transaction[]> {
 
   return data || [];
 }
-

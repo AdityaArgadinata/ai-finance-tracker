@@ -1,466 +1,149 @@
-import { getTransactions, type Transaction } from "@/lib/supabase";
-import { format } from "date-fns";
-import { SummaryCards } from "@/app/components/SummaryCards";
-import { AIAdvisorCard } from "@/app/components/AIAdvisorCard";
-import { DashboardClient } from "@/app/components/DashboardClient";
-import { DateRangeFilter } from "@/app/components/DateRangeFilter";
-import { PaginatedTransactions } from "@/app/components/PaginatedTransactions";
-import { ClientGate } from "@/app/components/ClientGate";
+import {
+  ArrowUpRight,
+  CalendarDays,
+  CreditCard,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
+import { AppHeader } from "@/app/components/AppHeader";
+import { getTransactions } from "@/lib/supabase";
+import { translateCategory } from "@/lib/utils";
+import Link from "next/link";
 
-interface TrendDataPoint {
-  date: string;
-  pemasukan: number;
-  pengeluaran: number;
-}
+const currency = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
+const dateLabel = new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
-interface CategoryBreakdown {
-  kategori: string;
-  nominal: number;
-}
+type Period = "week" | "month" | "year";
 
-function aggregateTrendData(transactions: Transaction[]): TrendDataPoint[] {
-  const trendMap = new Map<string, { pemasukan: number; pengeluaran: number }>();
-
-  transactions.forEach((tx) => {
-    const date = format(new Date(tx.created_at), "dd MMM");
-
-    const existing = trendMap.get(date) || {
-      pemasukan: 0,
-      pengeluaran: 0,
-    };
-
-    if (tx.jenis === "pemasukan") {
-      existing.pemasukan += tx.nominal;
-    } else {
-      existing.pengeluaran += tx.nominal;
-    }
-
-    trendMap.set(date, existing);
-  });
-
-  return Array.from(trendMap.entries())
-    .reverse()
-    .map(([date, values]) => ({
-      date,
-      pemasukan: values.pemasukan,
-      pengeluaran: values.pengeluaran,
-    }));
-}
-
-function aggregateCategoryBreakdown(
-  transactions: Transaction[]
-): CategoryBreakdown[] {
-  const categoryMap = new Map<string, number>();
-
-  transactions.forEach((tx) => {
-    if (tx.jenis === "pengeluaran") {
-      const existing = categoryMap.get(tx.kategori) || 0;
-      categoryMap.set(tx.kategori, existing + tx.nominal);
-    }
-  });
-
-  return Array.from(categoryMap.entries())
-    .map(([kategori, nominal]) => ({ kategori, nominal }))
-    .sort((a, b) => b.nominal - a.nominal);
-}
-
-
-
-
-export default async function Home({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  const params = await searchParams;
-  const startDateParam = params.startDate as string | undefined;
-  const endDateParam = params.endDate as string | undefined;
-
+export default async function Home({ searchParams }: { searchParams: Promise<{ period?: string }> }) {
+  const requestedPeriod = (await searchParams).period;
+  const period: Period = requestedPeriod === "week" || requestedPeriod === "year" ? requestedPeriod : "month";
   const allTransactions = await getTransactions();
-
-  // Filter transactions by date range if provided
-  let filteredTransactions = allTransactions;
-
-  if (startDateParam || endDateParam) {
-    filteredTransactions = allTransactions.filter((tx) => {
-      const txDate = new Date(tx.created_at);
-
-      if (startDateParam) {
-        const startDate = new Date(startDateParam);
-        startDate.setHours(0, 0, 0, 0);
-        if (txDate < startDate) return false;
-      }
-
-      if (endDateParam) {
-        const endDate = new Date(endDateParam);
-        endDate.setHours(23, 59, 59, 999);
-        if (txDate > endDate) return false;
-      }
-
-      return true;
-    });
-  }
-
-  // Calculate summary statistics from filtered data
-  const totalIncome = filteredTransactions
-    .filter((tx) => tx.jenis === "pemasukan")
-    .reduce((sum, tx) => sum + tx.nominal, 0);
-
-  const totalExpense = filteredTransactions
-    .filter((tx) => tx.jenis === "pengeluaran")
-    .reduce((sum, tx) => sum + tx.nominal, 0);
-
-  const totalBalance = totalIncome - totalExpense;
-  const burnRate = totalIncome > 0 ? (totalExpense / totalIncome) * 100 : 0;
-
-  // Aggregate data for charts
-  const trendData = aggregateTrendData(filteredTransactions);
-  const categoryBreakdown = aggregateCategoryBreakdown(filteredTransactions);
-
-  // ----------------------------------------------------
-  // Upper Table YoY and PoP Calculations (Monospace UI)
-  // ----------------------------------------------------
-  const anchorDate = allTransactions.length > 0
-    ? new Date(Math.max(...allTransactions.map(t => new Date(t.created_at).getTime())))
-    : new Date();
-
-  // Month boundaries based on anchorDate
-  const currentMonthStart = new Date(anchorDate.getFullYear(), anchorDate.getMonth(), 1, 0, 0, 0, 0);
-  const currentMonthEnd = new Date(anchorDate.getFullYear(), anchorDate.getMonth() + 1, 0, 23, 59, 59, 999);
-
-  const prevMonthStart = new Date(anchorDate.getFullYear(), anchorDate.getMonth() - 1, 1, 0, 0, 0, 0);
-  const prevMonthEnd = new Date(anchorDate.getFullYear(), anchorDate.getMonth(), 0, 23, 59, 59, 999);
-
-  const currMonthTxs = allTransactions.filter(tx => {
-    const d = new Date(tx.created_at);
-    return d >= currentMonthStart && d <= currentMonthEnd;
+  const anchor = allTransactions[0] ? new Date(allTransactions[0].created_at) : new Date();
+  const currentStart = period === "week"
+    ? new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() - 6)
+    : period === "month"
+      ? new Date(anchor.getFullYear(), anchor.getMonth(), 1)
+      : new Date(anchor.getFullYear(), 0, 1);
+  const currentEnd = period === "week"
+    ? new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate(), 23, 59, 59, 999)
+    : period === "month"
+      ? new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0, 23, 59, 59, 999)
+      : new Date(anchor.getFullYear(), 11, 31, 23, 59, 59, 999);
+  const previousStart = period === "week"
+    ? new Date(currentStart.getFullYear(), currentStart.getMonth(), currentStart.getDate() - 7)
+    : period === "month"
+      ? new Date(anchor.getFullYear(), anchor.getMonth() - 1, 1)
+      : new Date(anchor.getFullYear() - 1, 0, 1);
+  const previousEnd = new Date(currentStart.getTime() - 1);
+  const inRange = (createdAt: string, start: Date, end: Date) => { const date = new Date(createdAt); return date >= start && date <= end; };
+  const transactions = allTransactions.filter((tx) => inRange(tx.created_at, currentStart, currentEnd));
+  const previousTransactions = allTransactions.filter((tx) => inRange(tx.created_at, previousStart, previousEnd));
+  const income = transactions.filter((tx) => tx.jenis === "pemasukan").reduce((sum, tx) => sum + tx.nominal, 0);
+  const expense = transactions.filter((tx) => tx.jenis === "pengeluaran").reduce((sum, tx) => sum + tx.nominal, 0);
+  const balance = income - expense;
+  const previousIncome = previousTransactions.filter((tx) => tx.jenis === "pemasukan").reduce((sum, tx) => sum + tx.nominal, 0);
+  const previousExpense = previousTransactions.filter((tx) => tx.jenis === "pengeluaran").reduce((sum, tx) => sum + tx.nominal, 0);
+  const comparison = [
+    ["Income", income, previousIncome],
+    ["Expense", expense, previousExpense],
+    ["Net balance", balance, previousIncome - previousExpense],
+  ] as const;
+  const burnRate = income ? Math.round((expense / income) * 100) : 0;
+  const bucketCount = period === "week" ? 7 : period === "month" ? 5 : 12;
+  const cashflow = Array.from({ length: bucketCount }, (_, index) => {
+    const start = period === "year"
+      ? new Date(anchor.getFullYear(), index, 1)
+      : period === "month"
+        ? new Date(anchor.getFullYear(), anchor.getMonth(), index * 7 + 1)
+        : new Date(currentStart.getFullYear(), currentStart.getMonth(), currentStart.getDate() + index);
+    const end = period === "year"
+      ? new Date(anchor.getFullYear(), index + 1, 0, 23, 59, 59, 999)
+      : period === "month"
+        ? new Date(Math.min(new Date(anchor.getFullYear(), anchor.getMonth(), (index + 1) * 7, 23, 59, 59, 999).getTime(), currentEnd.getTime()))
+        : new Date(start.getFullYear(), start.getMonth(), start.getDate(), 23, 59, 59, 999);
+    const bucketTransactions = transactions.filter((tx) => inRange(tx.created_at, start, end));
+    const bucketIncome = bucketTransactions.filter((tx) => tx.jenis === "pemasukan").reduce((sum, tx) => sum + tx.nominal, 0);
+    const bucketExpense = bucketTransactions.filter((tx) => tx.jenis === "pengeluaran").reduce((sum, tx) => sum + tx.nominal, 0);
+    const label = period === "week" ? start.toLocaleDateString("en-US", { weekday: "short" }) : period === "year" ? start.toLocaleDateString("en-US", { month: "short" }) : `${start.getDate()}–${end.getDate()}`;
+    return { label, income: bucketIncome, expense: bucketExpense };
   });
-
-  const prevMonthTxs = allTransactions.filter(tx => {
-    const d = new Date(tx.created_at);
-    return d >= prevMonthStart && d <= prevMonthEnd;
-  });
-
-  const getMetricsForPeriod = (txs: Transaction[]) => {
-    const income = txs.filter(t => t.jenis === "pemasukan").reduce((sum, t) => sum + t.nominal, 0);
-    const expense = txs.filter(t => t.jenis === "pengeluaran").reduce((sum, t) => sum + t.nominal, 0);
-    const balance = income - expense;
-    const avgTx = txs.length > 0 ? txs.reduce((sum, t) => sum + t.nominal, 0) / txs.length : 0;
-    const count = txs.length;
-
-    // Top category spend
-    const catMap = new Map<string, number>();
-    txs.filter(t => t.jenis === "pengeluaran").forEach(t => {
-      catMap.set(t.kategori, (catMap.get(t.kategori) || 0) + t.nominal);
-    });
-    let maxCatSpend = 0;
-    catMap.forEach((val) => {
-      if (val > maxCatSpend) maxCatSpend = val;
-    });
-
-    return { income, expense, balance, avgTx, count, maxCatSpend };
-  };
-
-  const currM = getMetricsForPeriod(currMonthTxs);
-  const prevM = getMetricsForPeriod(prevMonthTxs);
-
-  const currBurn = currM.income > 0 ? (currM.expense / currM.income) * 100 : 0;
-  const prevBurn = prevM.income > 0 ? (prevM.expense / prevM.income) * 100 : 0;
-
-  const computeGrowthRate = (curr: number, prev: number) => {
-    if (prev === 0 && curr === 0) {
-      return 0;
-    }
-    if (prev === 0) {
-      return 100;
-    }
-    if (curr === 0) {
-      return -100;
-    }
-    return parseFloat((((curr - prev) / prev) * 100).toFixed(2));
-  };
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
-
-  const renderCells = (
-    curr: number,
-    prev: number,
-    type: "currency" | "percent" | "number",
-    isInverse: boolean = false
-  ) => {
-    const diff = curr - prev;
-    const growth = computeGrowthRate(curr, prev);
-
-    let currStr = "";
-    let prevStr = "";
-    let diffStr = "";
-    const growthStr = (growth >= 0 ? "+" : "") + growth.toFixed(1) + "%";
-
-    if (type === "currency") {
-      currStr = formatCurrency(curr);
-      prevStr = formatCurrency(prev);
-      diffStr = (diff >= 0 ? "+" : "-") + formatCurrency(Math.abs(diff));
-    } else if (type === "percent") {
-      currStr = curr.toFixed(1) + "%";
-      prevStr = prev.toFixed(1) + "%";
-      diffStr = (diff >= 0 ? "+" : "") + diff.toFixed(1) + "%";
-    } else {
-      currStr = curr.toString();
-      prevStr = prev.toString();
-      diffStr = (diff >= 0 ? "+" : "") + diff.toString();
-    }
-
-    const isZero = diff === 0;
-    const isPositive = diff > 0;
-    const isGood = isZero ? null : (isInverse ? !isPositive : isPositive);
-
-    const textClass = isZero ? "text-slate-400" : isGood ? "text-[#00ff66]" : "text-[#ff4444]";
-    const bgClass = isZero ? "" : isGood ? "bg-[#0a3311]" : "bg-[#3d0f0f]";
-
-    return (
-      <>
-        <td className="px-2 py-1 text-right font-mono border border-[#222222] text-slate-200">
-          {currStr}
-        </td>
-        <td className="px-2 py-1 text-right font-mono border border-[#222222] text-slate-300">
-          {prevStr}
-        </td>
-        <td className={`px-2 py-1 text-right font-mono font-semibold border border-[#222222] ${textClass}`}>
-          {diffStr}
-        </td>
-        <td className={`px-2 py-1 text-center font-mono font-bold border border-[#222222] ${bgClass} ${textClass}`}>
-          {growthStr}
-        </td>
-      </>
-    );
+  const maxCashflow = Math.max(...cashflow.flatMap(({ income, expense }) => [income, expense]), 1);
+  const categories = [...transactions.filter((tx) => tx.jenis === "pengeluaran").reduce((map, tx) => map.set(tx.kategori, (map.get(tx.kategori) ?? 0) + tx.nominal), new Map<string, number>())]
+    .sort((a, b) => b[1] - a[1]);
+  const topCategory = categories[0];
+  const balanceChange = income ? Math.round((balance / income) * 100) : 0;
+  const periodLabel = period[0].toUpperCase() + period.slice(1);
+  const periodName = period === "week" ? "Minggu" : period === "month" ? "Bulan" : "Tahun";
+  const rangeLabel = (start: Date, end: Date) => {
+    if (period === "year") return start.getFullYear().toString();
+    if (period === "month") return start.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+    const sameMonth = start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear();
+    const startLabel = start.toLocaleDateString("en-US", { day: "numeric", ...(sameMonth ? {} : { month: "short" as const }) });
+    const endLabel = end.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
+    return `${startLabel}–${endLabel}`;
   };
 
   return (
-    <ClientGate>
-      <div className="min-h-screen bg-black text-white font-mono overflow-x-hidden">
-        {/* Bloomberg Top Title Bar */}
-        <div className="w-full bg-[#52031a] flex items-center justify-between border-b border-[#222] text-sm font-bold">
-          <div className="flex items-center">
-            <div className="bg-[#e67e22] text-black px-4 py-1.5 font-black uppercase tracking-wider">
-              EXPENSE MY Equity
-            </div>
-            <div className="bg-[#6d0925] text-white px-4 py-1.5 cursor-pointer hover:bg-[#800d2f] border-r border-[#444] flex items-center gap-1.5 transition-colors">
-              Export <span className="text-xs">▼</span>
-            </div>
+    <main className="shell">
+      <AppHeader active="dashboard" />
+
+      <section className="welcome" id="dashboard"><h1>Hello, <span>Aditya</span></h1></section>
+
+      <section className="period-filter" aria-label="Dashboard period">
+        <div className="period-range"><i><CalendarDays /></i><div><span>{periodName} ini</span><strong>{rangeLabel(currentStart, currentEnd)}</strong></div></div>
+        <nav>{(["week", "month", "year"] as const).map((value) => <Link className={period === value ? "active" : ""} href={`/?period=${value}`} key={value}>{value}</Link>)}</nav>
+      </section>
+
+      <section className="dashboard-grid">
+        <article className="card balance-card">
+          <div className="card-title"><h2>Total balance</h2><button><ArrowUpRight /></button></div>
+          <p className="muted">Available across all accounts</p>
+          <strong>{currency.format(balance)}</strong>
+          <div className="balance-change"><TrendingUp /> {balanceChange}% <span>of total income</span></div>
+        </article>
+
+        <article className="card cashflow-card" id="analytics">
+          <div className="card-title"><h2>Cash flow</h2><button><ArrowUpRight /></button></div>
+          <div className="cashflow-total"><span>{periodLabel} net flow</span><strong>{currency.format(balance)}</strong></div>
+          <div className="chart-legend"><span><i className="income-dot" />Income</span><span><i className="expense-dot" />Expense</span></div>
+          <div className="bars">{cashflow.map(({ label, income, expense }, index) => <div className="bar-group" key={`${label}-${index}`}><span className="chart-tooltip"><b>{label}</b><small><i className="income-dot" />Pemasukan <strong>{currency.format(income)}</strong></small><small><i className="expense-dot" />Pengeluaran <strong>{currency.format(expense)}</strong></small></span><i className="income-bar" style={{ height: `${Math.max((income / maxCashflow) * 100, income ? 6 : 0)}%` }} /><i className="expense-bar" style={{ height: `${Math.max((expense / maxCashflow) * 100, expense ? 6 : 0)}%` }} /></div>)}</div>
+          <div className="days">{cashflow.map(({ label }, index) => <span key={`${label}-${index}`}>{label}</span>)}</div>
+        </article>
+
+        <article className="lime-spend">
+          <h2>{periodLabel} spend</h2>
+          <p className="muted">Total expenses for this period</p>
+          <strong>{currency.format(expense)}</strong>
+          <div className="balance-change"><TrendingDown /> {burnRate}% <span>of total income</span></div>
+          <div className="spend-insight">
+            <span>Top category</span>
+            <b>{topCategory ? translateCategory(topCategory[0]) : "No expenses"}</b>
+            <small>{topCategory ? `${currency.format(topCategory[1])} · ${expense ? Math.round((topCategory[1] / expense) * 100) : 0}% of spend` : "No transaction in this period"}</small>
           </div>
-          <div className="text-slate-300 pr-4 text-xs font-semibold hidden md:block">
-            Equity Dashboard v1.0.4
-          </div>
-        </div>
+        </article>
 
-        {/* Bloomberg Navigation Menu Tabs */}
-        <div className="w-full bg-[#161616] border-b border-[#222] flex items-center text-xs">
-          <button className="px-5 py-2 border-r border-t border-[#333] border-t-white/30 text-white bg-black font-semibold font-mono tracking-wider">
-            Inflection
-          </button>
-          <button className="px-5 py-2 border-r border-[#222] text-[#888] hover:text-white transition-colors font-mono tracking-wider cursor-not-allowed">
-            KPI Correlation
-          </button>
-          <button className="px-5 py-2 border-r border-[#222] text-[#888] hover:text-white transition-colors font-mono tracking-wider cursor-not-allowed">
-            Trend Analysis
-          </button>
-        </div>
+        <article className="card category-card">
+          <div className="card-title"><h2>Spending categories</h2><button><ArrowUpRight /></button></div>
+          <ul>{categories.map(([category, amount], index) => <li key={category}><span className="round-icon">{index === 0 ? <TrendingDown /> : <CreditCard />}</span><div><b>{translateCategory(category)}</b><small>{currency.format(amount)}</small></div><em>{expense ? `${Math.round((amount / expense) * 100)}%` : "—"}</em></li>)}</ul>
+          {!categories.length && <p className="category-empty">Belum ada pengeluaran pada periode ini.</p>}
+        </article>
 
-        {/* Main Container */}
-        <div className="p-4 space-y-6">
-          {/* Title Block */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-[#333] pb-2">
-            <h1 className="text-lg font-bold text-white tracking-tight">
-              Balance Equity Expanse
-            </h1>
-            <div className="text-[#888] text-xs mt-1 md:mt-0 flex items-center gap-1.5">
-              Data hingga {format(anchorDate, "yyyy-MM-dd")} <span className="cursor-pointer text-white border border-[#555] rounded-full w-3.5 h-3.5 flex items-center justify-center text-[10px]" title="Info Telemetri DB Expanse">i</span> Tentang Data
-            </div>
-          </div>
+        <article className="card activity-card" id="transactions">
+          <div className="activity-head"><span>Recent activity</span><button><CalendarDays /></button></div>
+          <div className="transaction-list">{transactions.slice(0, 3).map((tx) => <div key={tx.id}><span className="round-icon"><CreditCard /></span><div><b>{tx.item}</b><small>{dateLabel.format(new Date(tx.created_at))} · {translateCategory(tx.kategori)}</small></div><strong className={tx.jenis === "pemasukan" ? "income" : ""}>{tx.jenis === "pemasukan" ? "+ " : "− "}{currency.format(tx.nominal)}</strong></div>)}</div>
+        </article>
 
-          {/* Top Section Layout: Metrics Table + Side Panel Information */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-
-            {/* Left Side: Alt Data Metrics Table */}
-            <div className="xl:col-span-2 overflow-x-auto border border-[#333] bg-[#0c0c0c]">
-              <table className="w-full text-xs text-left border-collapse">
-                <thead>
-                  <tr className="bg-[#111111] text-slate-400 border-b border-[#333]">
-                    <th className="p-2 font-mono font-medium border-r border-[#222] w-[28%]">
-                      Perbandingan Arus Kas Bulanan
-                    </th>
-                    <th className="p-2 text-right font-mono font-medium border-r border-[#222] w-[18%]">
-                      {format(currentMonthStart, "MMM yyyy")} (Saat Ini)
-                    </th>
-                    <th className="p-2 text-right font-mono font-medium border-r border-[#222] w-[18%]">
-                      {format(prevMonthStart, "MMM yyyy")} (Prev)
-                    </th>
-                    <th className="p-2 text-right font-mono font-medium border-r border-[#222] w-[18%]">
-                      Perubahan Nominal
-                    </th>
-                    <th className="p-2 text-center font-mono font-medium w-[18%]">
-                      Perubahan %
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {/* Expanse Telemetry Core Section */}
-                  <tr className="bg-[#050505]">
-                    <td colSpan={5} className="px-2 py-1.5 text-[#ffb000] font-bold border-b border-[#222]">
-                      Inti Telemetri Expanse
-                    </td>
-                  </tr>
-
-                  {/* Pemasukan Tercatat */}
-                  <tr className="hover:bg-[#1a1a1a] transition-colors">
-                    <td className="p-2 border border-[#222] font-semibold text-slate-200">
-                      <span className="text-[#00ff66] mr-1.5">●</span> Pemasukan Tercatat
-                    </td>
-                    {renderCells(currM.income, prevM.income, "currency")}
-                  </tr>
-
-                  {/* Pengeluaran Tercatat */}
-                  <tr className="hover:bg-[#1a1a1a] transition-colors">
-                    <td className="p-2 border border-[#222] font-semibold text-slate-200">
-                      <span className="text-[#ff4444] mr-1.5">●</span> Pengeluaran Tercatat
-                    </td>
-                    {renderCells(currM.expense, prevM.expense, "currency", true)}
-                  </tr>
-
-                  {/* Net Savings */}
-                  <tr className="hover:bg-[#1a1a1a] transition-colors">
-                    <td className="p-2 border border-[#222] font-semibold text-slate-200">
-                      <span className="text-[#00a2ff] mr-1.5">●</span> Recorded Net Savings
-                    </td>
-                    {renderCells(currM.balance, prevM.balance, "currency")}
-                  </tr>
-
-                  {/* Burn Rate */}
-                  <tr className="hover:bg-[#1a1a1a] transition-colors">
-                    <td className="p-2 border border-[#222] font-semibold text-slate-200">
-                      <span className="text-yellow-500 mr-1.5">●</span> Burn Rate
-                    </td>
-                    {renderCells(currBurn, prevBurn, "percent", true)}
-                  </tr>
-
-                  {/* Average Transaction Value */}
-                  <tr className="hover:bg-[#1a1a1a] transition-colors">
-                    <td className="p-2 border border-[#222] font-semibold text-slate-200">
-                      <span className="text-slate-400 mr-1.5">●</span> Nilai Rata-Rata Tercatat
-                    </td>
-                    {renderCells(currM.avgTx, prevM.avgTx, "currency")}
-                  </tr>
-
-                  {/* Transaction Frequency */}
-                  <tr className="hover:bg-[#1a1a1a] transition-colors">
-                    <td className="p-2 border border-[#222] font-semibold text-slate-200">
-                      <span className="text-slate-400 mr-1.5">●</span> Volume Transaksi Tercatat
-                    </td>
-                    {renderCells(currM.count, prevM.count, "number")}
-                  </tr>
-
-                  {/* Category-Level Spend Section */}
-                  <tr className="bg-[#050505]">
-                    <td colSpan={5} className="px-2 py-1.5 text-[#ffb000] font-bold border-b border-[#222]">
-                      Metrik Kategori
-                    </td>
-                  </tr>
-
-                  {/* Recorded Top Category Outflow */}
-                  <tr className="hover:bg-[#1a1a1a] transition-colors">
-                    <td className="p-2 border border-[#222] font-semibold text-slate-200">
-                      <span className="text-[#e67e22] mr-1.5">●</span> Pengeluaran Kategori Top Tercatat
-                    </td>
-                    {renderCells(currM.maxCatSpend, prevM.maxCatSpend, "currency", true)}
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            {/* Right Side: Expanse Telemetry Core Info Boxes */}
-            <div className="space-y-4 flex flex-col justify-between">
-              {/* Box 1 */}
-              <div className="border border-[#333] bg-[#0c0c0c] p-4 text-xs font-mono">
-                <div className="flex justify-between items-center text-[#ffb000] font-bold mb-2">
-                  <span>Inti Telemetri Expanse:</span>
-                  <span className="border border-[#555] px-1 hover:bg-[#222] cursor-pointer">?</span>
-                </div>
-                <ul className="space-y-1 text-slate-300">
-                  <li><span className="text-slate-400 font-bold">Sumber:</span> Telemetri Real-time Supabase</li>
-                  <li><span className="text-slate-400 font-bold">Ruang Lingkup:</span> Log Pemasukan & Pengeluaran Pribadi</li>
-                  <li><span className="text-slate-400 font-bold">Volume:</span> {allTransactions.length} Tx Terdaftar</li>
-                  <li><span className="text-slate-400 font-bold">Mata Uang:</span> IDR (Rp)</li>
-                  <li><span className="text-slate-400 font-bold">Link Terminal:</span> SECM &lt;GO&gt;</li>
-                </ul>
-              </div>
-
-              {/* AI Advisor Panel (Box 2) */}
-              <div className="border border-[#333] bg-[#0c0c0c] p-4 text-xs font-mono flex-1 flex flex-col justify-between mt-0 xl:mt-2">
-                <div className="flex justify-between items-center text-[#ffb000] font-bold mb-2">
-                  <span>Penasihat AI Expanse:</span>
-                  <span className="border border-[#555] px-1 hover:bg-[#222] cursor-pointer">?</span>
-                </div>
-                <AIAdvisorCard
-                  summaryData={{
-                    totalIncome,
-                    totalExpense,
-                    totalBalance,
-                    burnRate,
-                    topCategories: categoryBreakdown.slice(0, 3),
-                  }}
-                />
-              </div>
-            </div>
-
-          </div>
-
-          {/* Date Filters Area */}
-          <section className="bg-black border border-[#333] p-4">
-            <div className="text-slate-400 text-xs uppercase tracking-wider font-bold mb-2">
-              Filter Terminal
-            </div>
-            <DateRangeFilter />
-          </section>
-
-          {/* Summary Value Cards Panel */}
-          <section>
-            <div className="text-slate-400 text-xs uppercase tracking-wider font-bold mb-2">
-              Ledger Totals
-            </div>
-            <SummaryCards
-              totalBalance={totalBalance}
-              totalIncome={totalIncome}
-              totalExpense={totalExpense}
-              burnRate={burnRate}
-            />
-          </section>
-
-          {/* Chart Section */}
-          <section>
-            <DashboardClient
-              trendData={trendData}
-              categoryBreakdown={categoryBreakdown}
-              transactions={filteredTransactions}
-            />
-          </section>
-
-          {/* Paginated Transactions Section */}
-          <section className="border border-[#333] bg-[#0c0c0c] p-4">
-            <div className="text-slate-400 text-xs uppercase tracking-wider font-bold mb-3">
-              Transaction Ledger List
-            </div>
-            <PaginatedTransactions transactions={filteredTransactions} />
-          </section>
-
-        </div>
-      </div>
-    </ClientGate>
+        <article className="card comparison-card">
+          <div className="comparison-heading"><div><span>Perbandingan {periodName.toLowerCase()}</span><h2>{periodName} ini vs {periodName} lalu</h2></div><TrendingUp /></div>
+          <div className="comparison-table-wrap"><table className="comparison-table"><thead><tr><th>Metric</th><th>{periodName} ini <small>{rangeLabel(currentStart, currentEnd)}</small></th><th>{periodName} lalu <small>{rangeLabel(previousStart, previousEnd)}</small></th><th>Difference</th><th>Change</th></tr></thead><tbody>{comparison.map(([label, current, previous]) => {
+            const difference = current - previous;
+            const change = previous ? Math.round((difference / Math.abs(previous)) * 100) : current ? 100 : 0;
+            const positive = label === "Expense" ? difference <= 0 : difference >= 0;
+            return <tr key={label}><th>{label}</th><td>{currency.format(current)}</td><td>{currency.format(previous)}</td><td className={positive ? "positive" : "negative"}>{difference >= 0 ? "+" : "−"}{currency.format(Math.abs(difference))}</td><td><span className={positive ? "positive" : "negative"}>{change >= 0 ? "+" : ""}{change}%</span></td></tr>;
+          })}</tbody></table></div>
+        </article>
+      </section>
+    </main>
   );
 }

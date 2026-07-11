@@ -22,7 +22,7 @@ export function SummaryCards({
     }).format(value);
   };
 
-  // Determine burn rate color and status in terminal style
+  // Determine burn rate color and status
   const getBurnRateColor = (rate: number) => {
     if (rate <= 50) return { textClass: "text-[#00ff66]", bgClass: "bg-[#0a3311]" };
     if (rate <= 80) return { textClass: "text-[#ffb000]", bgClass: "bg-[#3d2700]" };
@@ -33,15 +33,15 @@ export function SummaryCards({
   const balanceColor = totalBalance >= 0 ? "text-[#00ff66]" : "text-[#ff4444]";
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 font-mono text-xs">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 text-xs">
       
       {/* Total Balance Card */}
-      <div className="border border-[#333] bg-[#0c0c0c] p-4 flex flex-col justify-between hover:border-[#444] transition-all">
+      <div className="min-h-48 border border-[#333] bg-[#0c0c0c] p-6 flex flex-col justify-between hover:-translate-y-1 transition-all">
         <div>
           <p className="text-slate-400 font-bold uppercase tracking-wider">
             Total Saldo
           </p>
-          <p className={`mt-2 text-2xl font-black ${balanceColor}`}>
+          <p className={`mt-4 text-3xl font-medium ${balanceColor}`}>
             {formatCurrency(totalBalance)}
           </p>
         </div>
@@ -51,12 +51,12 @@ export function SummaryCards({
       </div>
 
       {/* Total Income Card */}
-      <div className="border border-[#333] bg-[#0c0c0c] p-4 flex flex-col justify-between hover:border-[#444] transition-all">
+      <div className="min-h-48 border border-[#333] bg-[#0c0c0c] p-6 flex flex-col justify-between hover:-translate-y-1 transition-all">
         <div>
           <p className="text-slate-400 font-bold uppercase tracking-wider">
             Total Pemasukan
           </p>
-          <p className="mt-2 text-2xl font-black text-[#00ff66]">
+          <p className="mt-4 text-3xl font-medium text-[#00ff66]">
             {formatCurrency(totalIncome)}
           </p>
         </div>
@@ -66,12 +66,12 @@ export function SummaryCards({
       </div>
 
       {/* Total Expense Card */}
-      <div className="border border-[#333] bg-[#0c0c0c] p-4 flex flex-col justify-between hover:border-[#444] transition-all">
+      <div className="min-h-48 border border-[#333] bg-[#0c0c0c] p-6 flex flex-col justify-between hover:-translate-y-1 transition-all">
         <div>
           <p className="text-slate-400 font-bold uppercase tracking-wider">
             Total Pengeluaran
           </p>
-          <p className="mt-2 text-2xl font-black text-[#ff4444]">
+          <p className="mt-4 text-3xl font-medium text-[#ff4444]">
             {formatCurrency(totalExpense)}
           </p>
         </div>
@@ -81,7 +81,7 @@ export function SummaryCards({
       </div>
 
       {/* Burn Rate Card */}
-      <div className="border border-[#333] bg-[#0c0c0c] p-4 flex flex-col justify-between hover:border-[#444] transition-all">
+      <div className="min-h-48 border border-[#333] bg-[#0c0c0c] p-6 flex flex-col justify-between hover:-translate-y-1 transition-all">
         <div>
           <p className="text-slate-400 font-bold uppercase tracking-wider">
             Indikator Tingkat Pembakaran

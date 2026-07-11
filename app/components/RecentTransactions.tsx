@@ -41,7 +41,7 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
         </span>
       </div>
 
-      <div className="overflow-x-auto terminal-scroll">
+      <div className="overflow-x-auto clean-scroll">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-[#151515] text-slate-400 border-b border-[#333]">

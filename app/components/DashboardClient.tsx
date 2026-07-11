@@ -150,7 +150,7 @@ export function DashboardClient({
   // Rows definition: Name, color class, type (for lookup)
   const rows = [
     { name: "Tren Penghematan Bersih (BI) - Median", type: "balance", colorValue: "#888888" },
-    { name: "Total Ledger Expanse Pengeluaran", type: "expense", colorValue: "#00a2ff" },
+    { name: "Total Pengeluaran", type: "expense", colorValue: "#00a2ff" },
     ...displayCategories.map((cat, idx) => ({
       name: translateCategory(cat),
       type: `category-${cat}`,
@@ -281,22 +281,22 @@ export function DashboardClient({
               ) : (
                 <ResponsiveContainer width="100%" height={320} minWidth={0}>
                   <ComposedChart data={filteredTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid stroke="#222222" strokeDasharray="3 3" vertical={false} />
+                    <CartesianGrid stroke="#303030" strokeDasharray="3 3" vertical={false} />
                     <XAxis
                       dataKey="date"
-                      tick={{ fill: "#888", fontSize: 10, fontFamily: "monospace" }}
-                      stroke="#333"
+                      tick={{ fill: "#64748b", fontSize: 10, fontFamily: "system-ui" }}
+                      stroke="#444"
                     />
                     <YAxis
-                      tick={{ fill: "#888", fontSize: 10, fontFamily: "monospace" }}
-                      stroke="#333"
+                      tick={{ fill: "#64748b", fontSize: 10, fontFamily: "system-ui" }}
+                      stroke="#444"
                     />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: "#000000",
-                        border: "1px solid #555555",
-                        color: "#ffffff",
-                        fontFamily: "monospace",
+                        backgroundColor: "#292929",
+                        border: "1px solid #3a3a3a",
+                        color: "#f5f5f5",
+                        fontFamily: "system-ui",
                         fontSize: "11px",
                       }}
                       formatter={(value) => [formatCurrency(Number(value)), ""]}
@@ -330,7 +330,7 @@ export function DashboardClient({
               )
             ) : (
               <div className="w-full h-full bg-[#0c0c0c] flex items-center justify-center text-slate-500 font-mono text-xs">
-                Memuat data tren telemetri...
+                Memuat data tren...
               </div>
             )}
           </div>
@@ -398,10 +398,10 @@ export function DashboardClient({
                       <Tooltip
                         formatter={(value) => formatCurrency(Number(value))}
                         contentStyle={{
-                          backgroundColor: "#000000",
-                          border: "1px solid #555555",
-                          color: "#ffffff",
-                          fontFamily: "monospace",
+                          backgroundColor: "#292929",
+                          border: "1px solid #3a3a3a",
+                          color: "#f5f5f5",
+                          fontFamily: "system-ui",
                           fontSize: "11px",
                         }}
                       />
@@ -476,7 +476,6 @@ export function DashboardClient({
             Ringkasan Arus Kas {interval === "weekly" ? "Mingguan" : "Bulanan"} (12 {interval === "weekly" ? "Minggu" : "Bulan"} Terakhir) - Nominal IDR
           </div>
 
-          {/* Bloomberg styled filter dropdowns & blue timeframes */}
           <div className="flex flex-wrap items-center gap-3 mt-2 lg:mt-0 text-xs">
             {/* Filter 1 */}
             <div className="flex items-center gap-1">
@@ -497,7 +496,6 @@ export function DashboardClient({
               </button>
             </div>
 
-            {/* Timeframe selector buttons (Bloomberg Blue) */}
             <div className="flex border border-[#333] ml-2">
               {["3M", "6M", "1Y", "Max"].map((tf) => (
                 <button
