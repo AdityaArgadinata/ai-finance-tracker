@@ -1,4 +1,4 @@
-import { ArrowRight, ArrowUpRight, WalletCards } from "lucide-react";
+import { ArrowRight, WalletCards } from "lucide-react";
 import { loginWithGoogle } from "@/app/actions/auth";
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
@@ -10,7 +10,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <header className="login-topbar"><div className="login-brand"><WalletCards /> Expanse</div></header>
         <section className="login-layout">
           <article className="login-hero">
-            <div className="login-hero-head"><span>EXP / 2026</span><i><ArrowUpRight /></i></div>
+            <div className="login-hero-head"><span>EXP / 2026</span></div>
             <div className="login-hero-copy"><h1>Money,<br />in focus.</h1><p>A clear view of every rupiah.</p></div>
           </article>
           <article className="login-card">
