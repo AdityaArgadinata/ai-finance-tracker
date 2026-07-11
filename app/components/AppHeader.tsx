@@ -1,4 +1,4 @@
-import { Bell, CircleUserRound, LogOut, WalletCards } from "lucide-react";
+import { Bell, ChevronRight, CircleUserRound, LogOut, WalletCards } from "lucide-react";
 import Link from "next/link";
 import { logout } from "@/app/actions/auth";
 import { createAuthClient } from "@/lib/supabase-auth";
@@ -26,8 +26,11 @@ export async function AppHeader({ active }: { active: string }) {
         <details className="profile-menu">
           <summary aria-label="Profile"><CircleUserRound /></summary>
           <div className="profile-popover">
-            <div className="profile-identity"><span>{name.charAt(0).toUpperCase()}</span><div><strong>{name}</strong><small>{user?.email}</small></div></div>
-            <Link href="/accounts">View account</Link>
+            <div className="profile-identity">
+              <span>{name.charAt(0).toUpperCase()}</span>
+              <div><small>Signed in as</small><strong>{name}</strong><p>{user?.email}</p></div>
+            </div>
+            <Link href="/accounts">View account <ChevronRight /></Link>
             <form action={logout}><button type="submit"><LogOut /> Log out</button></form>
           </div>
         </details>
