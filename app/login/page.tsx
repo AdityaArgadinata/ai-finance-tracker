@@ -1,5 +1,6 @@
 import { ArrowRight, WalletCards } from "lucide-react";
 import { loginWithGoogle } from "@/app/actions/auth";
+import { Google } from "@/app/components/Google";
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const hasError = Boolean((await searchParams).error);
@@ -18,7 +19,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
             <h2>Good to see you.</h2>
             <p>Continue to your personal finance dashboard.</p>
             <form action={loginWithGoogle}>
-              <button className="google-login" type="submit"><i>G</i> Continue with Google <ArrowRight /></button>
+              <button className="google-login" type="submit"><Google className="google-icon" /> Continue with Google <ArrowRight /></button>
             </form>
             {hasError && <small className="login-error">Google sign-in could not be started. Please try again.</small>}
           </article>
