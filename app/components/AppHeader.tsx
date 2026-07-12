@@ -8,6 +8,7 @@ const links = [
   ["Transactions", "/transactions"],
   ["Analytics", "/analytics"],
   ["Accounts", "/accounts"],
+  ["Tutorial", "/tutorial"],
 ];
 
 export async function AppHeader({ active }: { active: string }) {

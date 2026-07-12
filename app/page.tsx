@@ -6,8 +6,10 @@ import {
 } from "lucide-react";
 import { AppHeader } from "@/app/components/AppHeader";
 import { getTransactions } from "@/lib/supabase";
+import { createAuthClient } from "@/lib/supabase-auth";
 import { translateCategory } from "@/lib/utils";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 const currency = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
 const dateLabel = new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
@@ -17,7 +19,10 @@ type Period = "week" | "month" | "year";
 export default async function Home({ searchParams }: { searchParams: Promise<{ period?: string }> }) {
   const requestedPeriod = (await searchParams).period;
   const period: Period = requestedPeriod === "week" || requestedPeriod === "year" ? requestedPeriod : "month";
-  const allTransactions = await getTransactions();
+  const supabase = await createAuthClient();
+  const [{ data: { user } }, allTransactions] = await Promise.all([supabase.auth.getUser(), getTransactions()]);
+  if (!user) redirect("/login");
+  const name = String(user.user_metadata.full_name ?? user.user_metadata.name ?? user.email?.split("@")[0] ?? "User").split(" ")[0];
   const anchor = allTransactions[0] ? new Date(allTransactions[0].created_at) : new Date();
   const currentStart = period === "week"
     ? new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() - 6)
@@ -87,7 +92,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
     <main className="shell">
       <AppHeader active="dashboard" />
 
-      <section className="welcome" id="dashboard"><h1>Hello, <span>Aditya</span></h1></section>
+      <section className="welcome" id="dashboard"><h1>Hello, <span>{name}</span></h1></section>
 
       <section className="period-filter" aria-label="Dashboard period">
         <div className="period-range"><i><CalendarDays /></i><div><span>This {periodName.toLowerCase()}</span><strong>{rangeLabel(currentStart, currentEnd)}</strong></div></div>
