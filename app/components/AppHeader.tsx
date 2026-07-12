@@ -1,4 +1,4 @@
-import { Bell, ChevronRight, CircleUserRound, LogOut, WalletCards } from "lucide-react";
+import { Bell, ChevronRight, CircleUserRound, LogOut, Menu, WalletCards } from "lucide-react";
 import Link from "next/link";
 import { logout } from "@/app/actions/auth";
 import { createAuthClient } from "@/lib/supabase-auth";
@@ -23,6 +23,12 @@ export async function AppHeader({ active }: { active: string }) {
         {links.map(([label, href]) => <Link className={active === label.toLowerCase() ? "active" : ""} href={href} key={href}>{label}</Link>)}
       </nav>
       <div className="actions">
+        <details className="mobile-nav">
+          <summary aria-label="Open navigation"><Menu /></summary>
+          <nav className="mobile-links" aria-label="Mobile navigation">
+            {links.map(([label, href]) => <Link className={active === label.toLowerCase() ? "active" : ""} href={href} key={href}>{label}</Link>)}
+          </nav>
+        </details>
         <button aria-label="Notifications"><Bell /></button>
         <details className="profile-menu">
           <summary aria-label="Profile"><CircleUserRound /></summary>
