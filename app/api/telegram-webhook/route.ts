@@ -35,6 +35,16 @@ const supabase = createClient(
 );
 
 const TG_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!;
+const FORMAT_ERROR = [
+  "❌ Format transaksi tidak dikenali.",
+  "",
+  "Tulis nama item dan nominalnya. Contoh:",
+  "• beli makan 26k",
+  "• bensin motor 50k",
+  "• gaji bulanan 5000k",
+  "",
+  "Gunakan angka untuk nominal, misalnya 26k atau 26000.",
+].join("\n");
 
 // ── Helpers ──────────────────────────────────────────
 function formatRupiah(n: number): string {
@@ -97,6 +107,11 @@ export async function POST(req: NextRequest) {
     }
 
     const groq = new Groq({ apiKey: groqApiKey });
+
+    if (!/\d/.test(msg.text)) {
+      await replyTelegram(chatId, FORMAT_ERROR);
+      return NextResponse.json({ ok: true });
+    }
 
     // 1. Call Groq
     const completion = await groq.chat.completions.create({
@@ -165,8 +180,8 @@ CONTOH PARSING LAINNYA:
     const parsed: GroqParsedTransaction = JSON.parse(raw);
 
     // 2. Validate required fields
-    if (!parsed.jenis || !parsed.kategori || !parsed.item || !parsed.nominal) {
-      await replyTelegram(chatId, "❌ Format tidak dikenali. Silakan coba lagi.");
+    if ((parsed.jenis !== "pemasukan" && parsed.jenis !== "pengeluaran") || !parsed.kategori?.trim() || !parsed.item?.trim() || !Number.isFinite(parsed.nominal) || parsed.nominal <= 0) {
+      await replyTelegram(chatId, FORMAT_ERROR);
       return NextResponse.json({ ok: true }, { status: 200 });
     }
 
