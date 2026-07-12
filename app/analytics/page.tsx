@@ -37,17 +37,17 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
   const maxFlow = Math.max(...flow.flatMap(({ income, expense }) => [income, expense]), 1);
   const expenseChange = previous.expense ? Math.round(((current.expense - previous.expense) / previous.expense) * 100) : current.expense ? 100 : 0;
   const topCategory = categories[0];
-  const periodName = period === "week" ? "minggu" : period === "month" ? "bulan" : "tahun";
+  const periodName = period === "week" ? "week" : period === "month" ? "month" : "year";
   const insight = !expenses.length
-    ? `Belum ada pengeluaran ${periodName} ini untuk dianalisis.`
-    : `${translateCategory(topCategory[0])} adalah kategori terbesar, mengambil ${Math.round((topCategory[1] / current.expense) * 100)}% dari total pengeluaran ${periodName} ini.`;
+    ? `No expenses to analyze this ${periodName}.`
+    : `${translateCategory(topCategory[0])} is the largest category, accounting for ${Math.round((topCategory[1] / current.expense) * 100)}% of this ${periodName}'s expenses.`;
 
   return (
     <main className="shell">
       <AppHeader active="analytics" />
       <section className="page-heading"><div><span>Expanse</span><h1>Analytics</h1></div><p>Financial overview</p></section>
       <section className="period-filter" aria-label="Analytics period">
-        <div className="period-range"><i><CalendarDays /></i><div><span>Periode</span><strong>{periodName[0].toUpperCase() + periodName.slice(1)} ini</strong></div></div>
+        <div className="period-range"><i><CalendarDays /></i><div><span>Period</span><strong>This {periodName}</strong></div></div>
         <nav>{(["week", "month", "year"] as const).map((value) => <Link className={period === value ? "active" : ""} href={`/analytics?period=${value}`} key={value}>{value}</Link>)}</nav>
       </section>
       <section className="analytics-grid">
@@ -59,23 +59,23 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
 
         <article className="analytics-compare">
           <span>{periodName} over {periodName}</span><h2>{expenseChange > 0 ? "+" : ""}{expenseChange}%</h2>
-          <p>{expenseChange <= 0 ? <ArrowDownRight /> : <ArrowUpRight />} Pengeluaran dibanding {periodName} lalu</p>
-          <dl><div><dt>{periodName} ini</dt><dd>{currency.format(current.expense)}</dd></div><div><dt>{periodName} lalu</dt><dd>{currency.format(previous.expense)}</dd></div></dl>
+          <p>{expenseChange <= 0 ? <ArrowDownRight /> : <ArrowUpRight />} Expenses compared with last {periodName}</p>
+          <dl><div><dt>This {periodName}</dt><dd>{currency.format(current.expense)}</dd></div><div><dt>Last {periodName}</dt><dd>{currency.format(previous.expense)}</dd></div></dl>
         </article>
 
         <article className="card category-card analytics-categories">
           <div className="card-title"><div><span>Breakdown</span><h2>Spending categories</h2></div></div>
           <ul>{categories.slice(0, 6).map(([category, amount], index) => <li key={category}><span className="round-icon">{index ? <CreditCard /> : <TrendingDown />}</span><div><b>{translateCategory(category)}</b><small>{currency.format(amount)}</small></div><em>{current.expense ? `${Math.round(amount / current.expense * 100)}%` : "—"}</em></li>)}</ul>
-          {!categories.length && <p className="category-empty">Belum ada pengeluaran bulan ini.</p>}
+          {!categories.length && <p className="category-empty">No expenses in this period.</p>}
         </article>
 
         <article className="card analytics-top activity-card">
           <div className="card-title"><div><span>Largest expenses</span><h2>Top 5 transactions</h2></div></div>
           <div className="transaction-list">{[...expenses].sort((a, b) => b.nominal - a.nominal).slice(0, 5).map((tx) => <div key={tx.id}><span className="round-icon"><CreditCard /></span><div><b>{tx.item}</b><small>{translateCategory(tx.kategori)}</small></div><strong>− {currency.format(tx.nominal)}</strong></div>)}</div>
-          {!expenses.length && <p className="category-empty">Belum ada transaksi pengeluaran.</p>}
+          {!expenses.length && <p className="category-empty">No expense transactions yet.</p>}
         </article>
 
-        <article className="analytics-insight"><Lightbulb /><div><span>{periodName} insight</span><h2>{insight}</h2><p>{current.income ? `${Math.round((current.expense / current.income) * 100)}% pemasukan terpakai ${periodName} ini.` : `Belum ada pemasukan ${periodName} ini.`}</p></div></article>
+        <article className="analytics-insight"><Lightbulb /><div><span>{periodName} insight</span><h2>{insight}</h2><p>{current.income ? `${Math.round((current.expense / current.income) * 100)}% of income used this ${periodName}.` : `No income this ${periodName}.`}</p></div></article>
       </section>
     </main>
   );

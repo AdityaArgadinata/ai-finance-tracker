@@ -73,7 +73,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
   const topCategory = categories[0];
   const balanceChange = income ? Math.round((balance / income) * 100) : 0;
   const periodLabel = period[0].toUpperCase() + period.slice(1);
-  const periodName = period === "week" ? "Minggu" : period === "month" ? "Bulan" : "Tahun";
+  const periodName = period === "week" ? "Week" : period === "month" ? "Month" : "Year";
   const rangeLabel = (start: Date, end: Date) => {
     if (period === "year") return start.getFullYear().toString();
     if (period === "month") return start.toLocaleDateString("en-US", { month: "short", year: "numeric" });
@@ -90,7 +90,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
       <section className="welcome" id="dashboard"><h1>Hello, <span>Aditya</span></h1></section>
 
       <section className="period-filter" aria-label="Dashboard period">
-        <div className="period-range"><i><CalendarDays /></i><div><span>{periodName} ini</span><strong>{rangeLabel(currentStart, currentEnd)}</strong></div></div>
+        <div className="period-range"><i><CalendarDays /></i><div><span>This {periodName.toLowerCase()}</span><strong>{rangeLabel(currentStart, currentEnd)}</strong></div></div>
         <nav>{(["week", "month", "year"] as const).map((value) => <Link className={period === value ? "active" : ""} href={`/?period=${value}`} key={value}>{value}</Link>)}</nav>
       </section>
 
@@ -106,7 +106,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
           <div className="card-title"><h2>Cash flow</h2></div>
           <div className="cashflow-total"><span>{periodLabel} net flow</span><strong>{currency.format(balance)}</strong></div>
           <div className="chart-legend"><span><i className="income-dot" />Income</span><span><i className="expense-dot" />Expense</span></div>
-          <div className="bars">{cashflow.map(({ label, income, expense }, index) => <div className="bar-group" key={`${label}-${index}`}><span className="chart-tooltip"><b>{label}</b><small><i className="income-dot" />Pemasukan <strong>{currency.format(income)}</strong></small><small><i className="expense-dot" />Pengeluaran <strong>{currency.format(expense)}</strong></small></span><i className="income-bar" style={{ height: `${Math.max((income / maxCashflow) * 100, income ? 6 : 0)}%` }} /><i className="expense-bar" style={{ height: `${Math.max((expense / maxCashflow) * 100, expense ? 6 : 0)}%` }} /></div>)}</div>
+          <div className="bars">{cashflow.map(({ label, income, expense }, index) => <div className="bar-group" key={`${label}-${index}`}><span className="chart-tooltip"><b>{label}</b><small><i className="income-dot" />Income <strong>{currency.format(income)}</strong></small><small><i className="expense-dot" />Expense <strong>{currency.format(expense)}</strong></small></span><i className="income-bar" style={{ height: `${Math.max((income / maxCashflow) * 100, income ? 6 : 0)}%` }} /><i className="expense-bar" style={{ height: `${Math.max((expense / maxCashflow) * 100, expense ? 6 : 0)}%` }} /></div>)}</div>
           <div className="days">{cashflow.map(({ label }, index) => <span key={`${label}-${index}`}>{label}</span>)}</div>
         </article>
 
@@ -125,7 +125,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
         <article className="card category-card">
           <div className="card-title"><h2>Spending categories</h2></div>
           <ul>{categories.map(([category, amount], index) => <li key={category}><span className="round-icon">{index === 0 ? <TrendingDown /> : <CreditCard />}</span><div><b>{translateCategory(category)}</b><small>{currency.format(amount)}</small></div><em>{expense ? `${Math.round((amount / expense) * 100)}%` : "—"}</em></li>)}</ul>
-          {!categories.length && <p className="category-empty">Belum ada pengeluaran pada periode ini.</p>}
+          {!categories.length && <p className="category-empty">No expenses in this period.</p>}
         </article>
 
         <article className="card activity-card" id="transactions">
@@ -134,8 +134,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
         </article>
 
         <article className="card comparison-card">
-          <div className="comparison-heading"><div><span>Perbandingan {periodName.toLowerCase()}</span><h2>{periodName} ini vs {periodName} lalu</h2></div><TrendingUp /></div>
-          <div className="comparison-table-wrap"><table className="comparison-table"><thead><tr><th>Metric</th><th>{periodName} ini <small>{rangeLabel(currentStart, currentEnd)}</small></th><th>{periodName} lalu <small>{rangeLabel(previousStart, previousEnd)}</small></th><th>Difference</th><th>Change</th></tr></thead><tbody>{comparison.map(([label, current, previous]) => {
+          <div className="comparison-heading"><div><span>{periodName} comparison</span><h2>This {periodName.toLowerCase()} vs last {periodName.toLowerCase()}</h2></div><TrendingUp /></div>
+          <div className="comparison-table-wrap"><table className="comparison-table"><thead><tr><th>Metric</th><th>This {periodName.toLowerCase()} <small>{rangeLabel(currentStart, currentEnd)}</small></th><th>Last {periodName.toLowerCase()} <small>{rangeLabel(previousStart, previousEnd)}</small></th><th>Difference</th><th>Change</th></tr></thead><tbody>{comparison.map(([label, current, previous]) => {
             const difference = current - previous;
             const change = previous ? Math.round((difference / Math.abs(previous)) * 100) : current ? 100 : 0;
             const positive = label === "Expense" ? difference <= 0 : difference >= 0;

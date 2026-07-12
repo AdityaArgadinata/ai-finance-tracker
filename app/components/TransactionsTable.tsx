@@ -1,11 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Pencil, Plus, Trash2, X } from "lucide-react";
+import { createTransaction, deleteTransaction, updateTransaction } from "@/app/actions/transactions";
 import type { Transaction } from "@/lib/supabase";
 import { translateCategory } from "@/lib/utils";
 
 const PAGE_SIZE = 10;
+const STANDARD_CATEGORIES = ["Makanan & Minuman", "Rokok", "Transportasi", "Belanja", "Tagihan & Utilitas", "Hiburan", "Kesehatan", "Pendidikan", "Gaji", "Investasi", "Bisnis", "Lain-lain"];
 const currency = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
 const date = new Intl.DateTimeFormat("id-ID", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
@@ -14,7 +16,10 @@ export function TransactionsTable({ transactions }: { transactions: Transaction[
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [category, setCategory] = useState("");
+  const [editing, setEditing] = useState<Transaction | null>();
+  const [now] = useState(() => new Date());
   const categories = useMemo(() => [...new Set(transactions.map((tx) => tx.kategori))].sort(), [transactions]);
+  const availableCategories = useMemo(() => [...new Set([...STANDARD_CATEGORIES, ...categories])], [categories]);
   const filtered = transactions.filter((tx) => {
     const transactionDate = new Date(tx.created_at);
     if (startDate && transactionDate < new Date(`${startDate}T00:00:00`)) return false;
@@ -34,8 +39,9 @@ export function TransactionsTable({ transactions }: { transactions: Transaction[
         <label><span>To</span><input type="date" value={endDate} min={startDate || undefined} onChange={(event) => changeFilter(setEndDate, event.target.value)} /></label>
         <label><span>Category</span><select value={category} onChange={(event) => changeFilter(setCategory, event.target.value)}><option value="">All categories</option>{categories.map((value) => <option value={value} key={value}>{translateCategory(value)}</option>)}</select></label>
         {(startDate || endDate || category) && <button className="clear-filters" onClick={clearFilters}><X /> Clear</button>}
+        <button className="add-transaction" onClick={() => setEditing(null)}><Plus /> Add transaction</button>
       </div>
-      <div className="transactions-head"><span>Date</span><span>Description</span><span>Category</span><span>Type</span><span>Amount</span></div>
+      <div className="transactions-head"><span>Date</span><span>Description</span><span>Category</span><span>Type</span><span>Amount</span><span /></div>
       {rows.map((tx) => (
         <div className="transaction-row" key={tx.id}>
           <time>{date.format(new Date(tx.created_at))}</time>
@@ -43,6 +49,7 @@ export function TransactionsTable({ transactions }: { transactions: Transaction[
           <span>{translateCategory(tx.kategori)}</span>
           <span className={`type ${tx.jenis}`}>{tx.jenis}</span>
           <b className={tx.jenis === "pemasukan" ? "income" : "expense"}>{tx.jenis === "pemasukan" ? "+ " : "− "}{currency.format(tx.nominal)}</b>
+          <span className="transaction-actions"><button aria-label={`Edit ${tx.item}`} onClick={() => setEditing(tx)}><Pencil /></button><form action={deleteTransaction} onSubmit={(event) => { if (!confirm(`Delete ${tx.item}?`)) event.preventDefault(); }}><input type="hidden" name="id" value={tx.id} /><button aria-label={`Delete ${tx.item}`}><Trash2 /></button></form></span>
         </div>
       ))}
       {!rows.length && <div className="empty-transactions">No transactions yet.</div>}
@@ -54,6 +61,7 @@ export function TransactionsTable({ transactions }: { transactions: Transaction[
           <button aria-label="Next page" disabled={page === totalPages} onClick={() => setPage((value) => value + 1)}><ChevronRight /></button>
         </div>
       </footer>
+      {editing !== undefined && <div className="transaction-modal" role="dialog" aria-modal="true" aria-labelledby="transaction-form-title"><form action={async (formData) => { if (editing) await updateTransaction(formData); else await createTransaction(formData); setEditing(undefined); }}><header><h2 id="transaction-form-title">{editing ? "Edit transaction" : "Add transaction"}</h2><button type="button" aria-label="Close" onClick={() => setEditing(undefined)}><X /></button></header>{editing && <input type="hidden" name="id" value={editing.id} />}<label><span>Date</span><input required type="datetime-local" name="created_at" defaultValue={new Date((editing ? new Date(editing.created_at) : now).getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16)} /></label><label><span>Description</span><input required maxLength={150} name="item" defaultValue={editing?.item} /></label><label><span>Category</span><select required name="kategori" defaultValue={editing?.kategori ?? "Makanan & Minuman"}>{availableCategories.map((value) => <option value={value} key={value}>{value}</option>)}</select></label><label><span>Type</span><select required name="jenis" defaultValue={editing?.jenis ?? "pengeluaran"}><option value="pengeluaran">Expense</option><option value="pemasukan">Income</option></select></label><label><span>Amount</span><input required min="1" step="1" type="number" name="nominal" defaultValue={editing?.nominal} /></label><footer><button type="button" onClick={() => setEditing(undefined)}>Cancel</button><button type="submit">Save transaction</button></footer></form></div>}
     </section>
   );
 }
