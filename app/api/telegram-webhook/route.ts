@@ -29,8 +29,6 @@ interface GroqResponse {
 }
 
 // ── Clients ──────────────────────────────────────────
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-
 const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!,
@@ -91,6 +89,14 @@ export async function POST(req: NextRequest) {
       await replyTelegram(chatId, "🔗 Connect Telegram from your Expanse Account page before recording transactions.");
       return NextResponse.json({ ok: true });
     }
+
+    const { data: groqApiKey, error: keyError } = await supabase.rpc("get_groq_api_key", { p_user_id: telegramAccount.user_id });
+    if (keyError || !groqApiKey) {
+      await replyTelegram(chatId, "❌ Groq AI is not connected.\n\nOpen Expanse → Account → Groq API key, save your key, then try again.");
+      return NextResponse.json({ ok: true });
+    }
+
+    const groq = new Groq({ apiKey: groqApiKey });
 
     // 1. Call Groq
     const completion = await groq.chat.completions.create({

@@ -1,13 +1,15 @@
-import { BadgeCheck, CalendarDays, Clock3, KeyRound, Mail, MessageCircle, Unlink } from "lucide-react";
+import { BadgeCheck, CalendarDays, Clock3, KeyRound, Mail, Sparkles, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { AppHeader } from "@/app/components/AppHeader";
 import { createAuthClient } from "@/lib/supabase-auth";
-import { createTelegramLinkCode, disconnectTelegram } from "@/app/actions/telegram";
+import { TelegramIntegration } from "@/app/components/TelegramIntegration";
+import { removeGroqApiKey, saveGroqApiKey } from "@/app/actions/ai-settings";
 
-const date = new Intl.DateTimeFormat("id-ID", { dateStyle: "long", timeStyle: "short" });
+const date = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" });
 
-export default async function AccountPage() {
+export default async function AccountPage({ searchParams }: { searchParams: Promise<{ ai?: string }> }) {
+  const aiStatus = (await searchParams).ai;
   const supabase = await createAuthClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -16,9 +18,10 @@ export default async function AccountPage() {
   const name = user.user_metadata.full_name ?? user.user_metadata.name ?? user.email?.split("@")[0] ?? "Expanse User";
   const avatar = typeof user.user_metadata.avatar_url === "string" ? user.user_metadata.avatar_url : null;
   const provider = String(user.app_metadata.provider ?? "google");
-  const [{ data: telegram }, { data: linkCode }] = await Promise.all([
+  const [{ data: telegram }, { data: linkCode }, { data: aiSettings }] = await Promise.all([
     supabase.from("telegram_accounts").select("chat_id, linked_at").maybeSingle(),
     supabase.from("telegram_link_codes").select("code, expires_at").maybeSingle(),
+    supabase.from("user_ai_settings").select("key_hint, updated_at").maybeSingle(),
   ]);
   const activeCode = linkCode && new Date(linkCode.expires_at) > new Date() ? linkCode : null;
 
@@ -47,9 +50,11 @@ export default async function AccountPage() {
           </dl>
         </article>
 
-        <article className="telegram-card">
-          <header><div><span>Integration</span><h2>Telegram & AI</h2></div><MessageCircle /></header>
-          {telegram ? <div className="telegram-connected"><i /><div><strong>Telegram connected</strong><small>Chat ID {telegram.chat_id} · Linked {date.format(new Date(telegram.linked_at))}</small></div><form action={disconnectTelegram}><button><Unlink /> Disconnect</button></form></div> : <div className="telegram-connect"><div><strong>Record transactions from Telegram</strong><p>Connect your Telegram account before using the bot and AI transaction parser.</p></div>{activeCode ? <div className="telegram-code"><span>Your one-time command</span><strong>/link {activeCode.code}</strong><small>Expires {date.format(new Date(activeCode.expires_at))}</small></div> : <form action={createTelegramLinkCode}><button><MessageCircle /> Generate link code</button></form>}</div>}
+        <TelegramIntegration telegram={telegram ? { chatId: telegram.chat_id, linkedAt: date.format(new Date(telegram.linked_at)) } : null} linkCode={activeCode ? { code: activeCode.code, expiresAt: date.format(new Date(activeCode.expires_at)) } : null} />
+
+        <article className="telegram-card ai-key-card">
+          <header><div><span>AI provider</span><h2>Groq API key</h2></div><Sparkles /></header>
+          <div className="ai-key-content"><div><strong>{aiSettings ? "Groq connected" : "Use your own Groq account"}</strong><p>{aiSettings ? `${aiSettings.key_hint} · Updated ${date.format(new Date(aiSettings.updated_at))}` : "Your key is validated by Groq and stored encrypted in Supabase Vault."}</p>{aiStatus === "invalid" && <small className="ai-key-error">The API key is invalid or could not connect to Groq.</small>}</div><form action={saveGroqApiKey}><input required type="password" name="api_key" autoComplete="off" placeholder={aiSettings ? "Enter a new key to replace it" : "gsk_..."} /><button><KeyRound /> {aiSettings ? "Replace key" : "Save key"}</button></form>{aiSettings && <form action={removeGroqApiKey}><button className="remove-ai-key" aria-label="Remove Groq API key"><Trash2 /></button></form>}</div>
         </article>
       </section>
     </main>
