@@ -1,15 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
-
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
-
-if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error(
-    "Missing Supabase environment variables (SUPABASE_URL or SUPABASE_SERVICE_KEY)"
-  );
-}
-
-export const supabase = createClient(supabaseUrl, supabaseServiceKey);
+import { createAuthClient } from "@/lib/supabase-auth";
 
 export interface Transaction {
   id: number;
@@ -18,9 +7,11 @@ export interface Transaction {
   kategori: string;
   item: string;
   nominal: number;
+  user_id: string;
 }
 
 export async function getTransactions(): Promise<Transaction[]> {
+  const supabase = await createAuthClient();
   const { data, error } = await supabase
     .from("transactions")
     .select("*")
@@ -31,5 +22,5 @@ export async function getTransactions(): Promise<Transaction[]> {
     return [];
   }
 
-  return data || [];
+  return data ?? [];
 }

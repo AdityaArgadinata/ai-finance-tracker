@@ -67,6 +67,31 @@ export async function POST(req: NextRequest) {
 
     const chatId = msg.chat.id;
 
+    const linkCode = msg.text.trim().match(/^\/link\s+([a-f0-9]{8})$/i)?.[1].toUpperCase();
+    if (linkCode) {
+      const { data: pending } = await supabase.from("telegram_link_codes").select("user_id, expires_at").eq("code", linkCode).maybeSingle();
+      if (!pending || new Date(pending.expires_at) <= new Date()) {
+        await replyTelegram(chatId, "❌ This link code is invalid or expired. Generate a new code from your Account page.");
+        return NextResponse.json({ ok: true });
+      }
+
+      const { error: linkError } = await supabase.from("telegram_accounts").upsert({ user_id: pending.user_id, chat_id: chatId, linked_at: new Date().toISOString() }, { onConflict: "user_id" });
+      if (linkError) {
+        await replyTelegram(chatId, "❌ This Telegram account is already linked to another user.");
+        return NextResponse.json({ ok: true });
+      }
+
+      await supabase.from("telegram_link_codes").delete().eq("user_id", pending.user_id);
+      await replyTelegram(chatId, "✅ Telegram connected to Expanse. You can now record transactions with natural language.");
+      return NextResponse.json({ ok: true });
+    }
+
+    const { data: telegramAccount } = await supabase.from("telegram_accounts").select("user_id").eq("chat_id", chatId).maybeSingle();
+    if (!telegramAccount) {
+      await replyTelegram(chatId, "🔗 Connect Telegram from your Expanse Account page before recording transactions.");
+      return NextResponse.json({ ok: true });
+    }
+
     // 1. Call Groq
     const completion = await groq.chat.completions.create({
       model: "llama-3.1-8b-instant",
@@ -142,6 +167,7 @@ CONTOH PARSING LAINNYA:
     // 3. Insert to Supabase
     const { error: dbError } = await supabase.from("transactions").insert({
       chat_id: chatId,
+      user_id: telegramAccount.user_id,
       jenis: parsed.jenis,
       kategori: parsed.kategori,
       item: parsed.item,
