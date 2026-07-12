@@ -1,5 +1,4 @@
 import {
-  ArrowUpRight,
   CalendarDays,
   CreditCard,
   TrendingDown,
@@ -97,14 +96,14 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
 
       <section className="dashboard-grid">
         <article className="card balance-card">
-          <div className="card-title"><h2>Total balance</h2><button><ArrowUpRight /></button></div>
+          <div className="card-title"><h2>Total balance</h2></div>
           <p className="muted">Available across all accounts</p>
           <strong>{currency.format(balance)}</strong>
           <div className="balance-change"><TrendingUp /> {balanceChange}% <span>of total income</span></div>
         </article>
 
         <article className="card cashflow-card" id="analytics">
-          <div className="card-title"><h2>Cash flow</h2><button><ArrowUpRight /></button></div>
+          <div className="card-title"><h2>Cash flow</h2></div>
           <div className="cashflow-total"><span>{periodLabel} net flow</span><strong>{currency.format(balance)}</strong></div>
           <div className="chart-legend"><span><i className="income-dot" />Income</span><span><i className="expense-dot" />Expense</span></div>
           <div className="bars">{cashflow.map(({ label, income, expense }, index) => <div className="bar-group" key={`${label}-${index}`}><span className="chart-tooltip"><b>{label}</b><small><i className="income-dot" />Pemasukan <strong>{currency.format(income)}</strong></small><small><i className="expense-dot" />Pengeluaran <strong>{currency.format(expense)}</strong></small></span><i className="income-bar" style={{ height: `${Math.max((income / maxCashflow) * 100, income ? 6 : 0)}%` }} /><i className="expense-bar" style={{ height: `${Math.max((expense / maxCashflow) * 100, expense ? 6 : 0)}%` }} /></div>)}</div>
@@ -124,7 +123,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
         </article>
 
         <article className="card category-card">
-          <div className="card-title"><h2>Spending categories</h2><button><ArrowUpRight /></button></div>
+          <div className="card-title"><h2>Spending categories</h2></div>
           <ul>{categories.map(([category, amount], index) => <li key={category}><span className="round-icon">{index === 0 ? <TrendingDown /> : <CreditCard />}</span><div><b>{translateCategory(category)}</b><small>{currency.format(amount)}</small></div><em>{expense ? `${Math.round((amount / expense) * 100)}%` : "—"}</em></li>)}</ul>
           {!categories.length && <p className="category-empty">Belum ada pengeluaran pada periode ini.</p>}
         </article>

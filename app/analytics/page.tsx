@@ -1,4 +1,4 @@
-import { ArrowDownRight, ArrowUpRight, CalendarDays, CreditCard, Lightbulb, ReceiptText, TrendingDown, TrendingUp } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, CalendarDays, CreditCard, Lightbulb, TrendingDown } from "lucide-react";
 import Link from "next/link";
 import { AppHeader } from "@/app/components/AppHeader";
 import { getTransactions } from "@/lib/supabase";
@@ -52,7 +52,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
       </section>
       <section className="analytics-grid">
         <article className="card analytics-flow">
-          <div className="card-title"><div><span>Cash flow</span><h2>Income vs expense</h2></div><button aria-label="Cash flow"><TrendingUp /></button></div>
+          <div className="card-title"><div><span>Cash flow</span><h2>Income vs expense</h2></div></div>
           <div className="chart-legend"><span><i className="income-dot" />Income</span><span><i className="expense-dot" />Expense</span></div>
           <div className="analytics-bars" style={{ gridTemplateColumns: `repeat(${bucketCount}, 1fr)` }}>{flow.map((bucket) => <div key={bucket.label}><span><i className="income-bar" style={{ height: `${bucket.income / maxFlow * 100}%` }} /><i className="expense-bar" style={{ height: `${bucket.expense / maxFlow * 100}%` }} /></span><small>{bucket.label}</small></div>)}</div>
         </article>
@@ -64,13 +64,13 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
         </article>
 
         <article className="card category-card analytics-categories">
-          <div className="card-title"><div><span>Breakdown</span><h2>Spending categories</h2></div><button aria-label="Categories"><ReceiptText /></button></div>
+          <div className="card-title"><div><span>Breakdown</span><h2>Spending categories</h2></div></div>
           <ul>{categories.slice(0, 6).map(([category, amount], index) => <li key={category}><span className="round-icon">{index ? <CreditCard /> : <TrendingDown />}</span><div><b>{translateCategory(category)}</b><small>{currency.format(amount)}</small></div><em>{current.expense ? `${Math.round(amount / current.expense * 100)}%` : "—"}</em></li>)}</ul>
           {!categories.length && <p className="category-empty">Belum ada pengeluaran bulan ini.</p>}
         </article>
 
         <article className="card analytics-top activity-card">
-          <div className="card-title"><div><span>Largest expenses</span><h2>Top 5 transactions</h2></div><button aria-label="Top expenses"><ReceiptText /></button></div>
+          <div className="card-title"><div><span>Largest expenses</span><h2>Top 5 transactions</h2></div></div>
           <div className="transaction-list">{[...expenses].sort((a, b) => b.nominal - a.nominal).slice(0, 5).map((tx) => <div key={tx.id}><span className="round-icon"><CreditCard /></span><div><b>{tx.item}</b><small>{translateCategory(tx.kategori)}</small></div><strong>− {currency.format(tx.nominal)}</strong></div>)}</div>
           {!expenses.length && <p className="category-empty">Belum ada transaksi pengeluaran.</p>}
         </article>
