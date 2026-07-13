@@ -31,7 +31,10 @@ export async function AppHeader({ active }: { active: string }) {
             {links.map(([label, href]) => <Link className={active === label.toLowerCase() ? "active" : ""} href={href} key={href}>{label}</Link>)}
           </nav>
         </DismissibleDetails>
-        <button aria-label="Notifications"><Bell /></button>
+        <DismissibleDetails className="notification-menu">
+          <summary aria-label="Notifications"><Bell /></summary>
+          <div className="profile-popover notification-popover"><div><Bell /><span>Notifications</span><strong>Coming soon</strong></div></div>
+        </DismissibleDetails>
         <DismissibleDetails className="profile-menu">
           <summary aria-label="Profile"><CircleUserRound /></summary>
           <div className="profile-popover">
