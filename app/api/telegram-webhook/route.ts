@@ -34,7 +34,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY!,
 );
 
-const TG_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!;
 const FORMAT_ERROR = [
   "❌ Format transaksi tidak dikenali.",
   "",
@@ -51,15 +50,8 @@ function formatRupiah(n: number): string {
   return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
-async function replyTelegram(chatId: number, text: string) {
-  await fetch(
-    `https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: chatId, text }),
-    },
-  );
+function replyTelegram(chatId: number, text: string) {
+  return NextResponse.json({ method: "sendMessage", chat_id: chatId, text });
 }
 
 // ── Route ────────────────────────────────────────────
@@ -79,38 +71,32 @@ export async function POST(req: NextRequest) {
     if (linkCode) {
       const { data: pending } = await supabase.from("telegram_link_codes").select("user_id, expires_at").eq("code", linkCode).maybeSingle();
       if (!pending || new Date(pending.expires_at) <= new Date()) {
-        await replyTelegram(chatId, "❌ This link code is invalid or expired. Generate a new code from your Account page.");
-        return NextResponse.json({ ok: true });
+        return replyTelegram(chatId, "❌ This link code is invalid or expired. Generate a new code from your Account page.");
       }
 
       const { error: linkError } = await supabase.from("telegram_accounts").upsert({ user_id: pending.user_id, chat_id: chatId, linked_at: new Date().toISOString() }, { onConflict: "user_id" });
       if (linkError) {
-        await replyTelegram(chatId, "❌ This Telegram account is already linked to another user.");
-        return NextResponse.json({ ok: true });
+        return replyTelegram(chatId, "❌ This Telegram account is already linked to another user.");
       }
 
       await supabase.from("telegram_link_codes").delete().eq("user_id", pending.user_id);
-      await replyTelegram(chatId, "✅ Telegram connected to Expanse. You can now record transactions with natural language.");
-      return NextResponse.json({ ok: true });
+      return replyTelegram(chatId, "✅ Telegram connected to Expanse. You can now record transactions with natural language.");
     }
 
     const { data: telegramAccount } = await supabase.from("telegram_accounts").select("user_id").eq("chat_id", chatId).maybeSingle();
     if (!telegramAccount) {
-      await replyTelegram(chatId, "🔗 Connect Telegram from your Expanse Account page before recording transactions.");
-      return NextResponse.json({ ok: true });
+      return replyTelegram(chatId, "🔗 Connect Telegram from your Expanse Account page before recording transactions.");
     }
 
     const { data: groqApiKey, error: keyError } = await supabase.rpc("get_groq_api_key", { p_user_id: telegramAccount.user_id });
     if (keyError || !groqApiKey) {
-      await replyTelegram(chatId, "❌ Groq AI is not connected.\n\nOpen Expanse → Account → Groq API key, save your key, then try again.");
-      return NextResponse.json({ ok: true });
+      return replyTelegram(chatId, "❌ Groq AI is not connected.\n\nOpen Expanse → Account → Groq API key, save your key, then try again.");
     }
 
     const groq = new Groq({ apiKey: groqApiKey });
 
     if (!/\d/.test(msg.text)) {
-      await replyTelegram(chatId, FORMAT_ERROR);
-      return NextResponse.json({ ok: true });
+      return replyTelegram(chatId, FORMAT_ERROR);
     }
 
     // 1. Call Groq
@@ -178,8 +164,7 @@ CONTOH PARSING LAINNYA:
 
     const raw = (completion as GroqResponse).choices[0]?.message?.content;
     if (!raw) {
-      await replyTelegram(chatId, "❌ Failed to process the message.");
-      return NextResponse.json({ ok: true }, { status: 200 });
+      return replyTelegram(chatId, "❌ Failed to process the message.");
     }
 
     const parsed: GroqParsedTransaction = JSON.parse(raw);
@@ -188,8 +173,7 @@ CONTOH PARSING LAINNYA:
 
     // 2. Validate required fields
     if ((parsed.jenis !== "pemasukan" && parsed.jenis !== "pengeluaran") || !parsed.kategori?.trim() || !parsed.item?.trim() || !Number.isFinite(parsed.nominal) || parsed.nominal <= 0) {
-      await replyTelegram(chatId, FORMAT_ERROR);
-      return NextResponse.json({ ok: true }, { status: 200 });
+      return replyTelegram(chatId, FORMAT_ERROR);
     }
 
     // 3. Insert to Supabase
@@ -204,8 +188,7 @@ CONTOH PARSING LAINNYA:
 
     if (dbError) {
       console.error("Supabase insert error:", dbError);
-      await replyTelegram(chatId, "❌ Gagal menyimpan ke database.");
-      return NextResponse.json({ ok: true }, { status: 200 });
+      return replyTelegram(chatId, "❌ Gagal menyimpan ke database.");
     }
 
     // 4. Reply success
@@ -217,7 +200,7 @@ CONTOH PARSING LAINNYA:
       `🔹 Nominal: Rp ${formatRupiah(parsed.nominal)}`,
     ].join("\n");
 
-    await replyTelegram(chatId, replyText);
+    return replyTelegram(chatId, replyText);
   } catch (err) {
     console.error("Webhook error:", err);
     // Always 200 to stop Telegram retries
