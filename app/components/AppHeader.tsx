@@ -2,6 +2,7 @@ import { Bell, ChevronRight, CircleUserRound, LogOut, Menu, WalletCards } from "
 import Link from "next/link";
 import { logout } from "@/app/actions/auth";
 import { createAuthClient } from "@/lib/supabase-auth";
+import { DismissibleDetails } from "@/app/components/DismissibleDetails";
 
 const links = [
   ["Dashboard", "/"],
@@ -23,14 +24,14 @@ export async function AppHeader({ active }: { active: string }) {
         {links.map(([label, href]) => <Link className={active === label.toLowerCase() ? "active" : ""} href={href} key={href}>{label}</Link>)}
       </nav>
       <div className="actions">
-        <details className="mobile-nav">
+        <DismissibleDetails className="mobile-nav">
           <summary aria-label="Open navigation"><Menu /></summary>
           <nav className="mobile-links" aria-label="Mobile navigation">
             {links.map(([label, href]) => <Link className={active === label.toLowerCase() ? "active" : ""} href={href} key={href}>{label}</Link>)}
           </nav>
-        </details>
+        </DismissibleDetails>
         <button aria-label="Notifications"><Bell /></button>
-        <details className="profile-menu">
+        <DismissibleDetails className="profile-menu">
           <summary aria-label="Profile"><CircleUserRound /></summary>
           <div className="profile-popover">
             <div className="profile-identity">
@@ -40,7 +41,7 @@ export async function AppHeader({ active }: { active: string }) {
             <Link href="/accounts">View account <ChevronRight /></Link>
             <form action={logout}><button type="submit"><LogOut /> Log out</button></form>
           </div>
-        </details>
+        </DismissibleDetails>
       </div>
     </header>
   );
