@@ -1,21 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Bot, Check, Copy, KeyRound, Unlink } from "lucide-react";
 import { createTelegramLinkCode, disconnectTelegram } from "@/app/actions/telegram";
 import { removeGroqApiKey, saveGroqApiKey } from "@/app/actions/ai-settings";
 
 export function TelegramIntegration({ telegram, linkCode, groq, aiStatus }: { telegram: { chatId: number; linkedAt: string } | null; linkCode: { code: string; expiresAt: string } | null; groq: { keyHint: string; updatedAt: string } | null; aiStatus?: string }) {
-  const router = useRouter();
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    if (telegram || !linkCode) return;
-    // ponytail: short-lived polling; use Supabase Realtime if Account traffic makes this expensive.
-    const interval = window.setInterval(() => router.refresh(), 2000);
-    return () => window.clearInterval(interval);
-  }, [telegram, linkCode, router]);
 
   const command = linkCode ? `/link ${linkCode.code}` : "";
 

@@ -1,7 +1,7 @@
 import { BadgeCheck, CalendarDays, Clock3, KeyRound, Mail } from "lucide-react";
-import Image from "next/image";
 import { redirect } from "next/navigation";
 import { AppHeader } from "@/app/components/AppHeader";
+import { AccountAvatar } from "@/app/components/AccountAvatar";
 import { createAuthClient } from "@/lib/supabase-auth";
 import { TelegramIntegration } from "@/app/components/TelegramIntegration";
 
@@ -15,7 +15,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   if (!user) redirect("/login");
 
   const name = user.user_metadata.full_name ?? user.user_metadata.name ?? user.email?.split("@")[0] ?? "Expanse User";
-  const avatar = typeof user.user_metadata.avatar_url === "string" ? user.user_metadata.avatar_url : null;
+  const avatar = [user.user_metadata.avatar_url, user.user_metadata.picture].find((value): value is string => typeof value === "string" && value.startsWith("https://"));
   const provider = String(user.app_metadata.provider ?? "google");
   const [{ data: telegram }, { data: linkCode }, { data: aiSettings }] = await Promise.all([
     supabase.from("telegram_accounts").select("chat_id, linked_at").maybeSingle(),
@@ -31,7 +31,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
 
       <section className="account-grid">
         <article className="account-profile">
-          <div className="account-avatar">{avatar ? <Image src={avatar} alt="" width={84} height={84} referrerPolicy="no-referrer" /> : name.charAt(0).toUpperCase()}</div>
+          <AccountAvatar key={avatar ?? "initial"} name={name} src={avatar} />
           <span className="account-provider"><i /> {provider} account</span>
           <h2>{name}</h2>
           <p>{user.email}</p>
@@ -45,7 +45,6 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
             <div><dt><KeyRound /> Sign-in method</dt><dd>{provider}</dd></div>
             <div><dt><CalendarDays /> Joined</dt><dd>{date.format(new Date(user.created_at))}</dd></div>
             <div><dt><Clock3 /> Last sign-in</dt><dd>{user.last_sign_in_at ? date.format(new Date(user.last_sign_in_at)) : "—"}</dd></div>
-            <div><dt><KeyRound /> User ID</dt><dd>{user.id}</dd></div>
           </dl>
         </article>
 
