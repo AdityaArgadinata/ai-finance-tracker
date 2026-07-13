@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Groq from "groq-sdk";
 import { createClient } from "@supabase/supabase-js";
+import { normalizeTelegramTransaction, type TelegramParsedTransaction } from "@/lib/telegram-transaction";
 
 // ── Types ────────────────────────────────────────────
 interface TelegramMessage {
@@ -11,13 +12,6 @@ interface TelegramMessage {
 
 interface TelegramUpdate {
   message?: TelegramMessage;
-}
-
-interface GroqParsedTransaction {
-  jenis: "pemasukan" | "pengeluaran";
-  kategori: string;
-  item: string;
-  nominal: number;
 }
 
 interface GroqResponse {
@@ -167,7 +161,7 @@ CONTOH PARSING LAINNYA:
       return replyTelegram(chatId, "❌ Failed to process the message.");
     }
 
-    const parsed: GroqParsedTransaction = JSON.parse(raw);
+    const parsed = normalizeTelegramTransaction(msg.text, JSON.parse(raw) as TelegramParsedTransaction);
     if (/\b(?:cafe|kafe|coffee shop)\b/i.test(msg.text)) parsed.kategori = "Cafe";
     else if (/\b(?:date|kencan)\b/i.test(msg.text)) parsed.kategori = "Date";
 
