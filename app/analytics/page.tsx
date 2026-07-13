@@ -19,6 +19,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
   const previousEnd = new Date(currentStart.getTime() - 1);
   const inRange = (createdAt: string, start: Date, end: Date) => { const date = new Date(createdAt); return date >= start && date <= end; };
   const rowsTotal = (rows: typeof transactions, type: "pemasukan" | "pengeluaran") => rows.filter((tx) => tx.jenis === type).reduce((sum, tx) => sum + tx.nominal, 0);
+  const allTime = { income: rowsTotal(transactions, "pemasukan"), expense: rowsTotal(transactions, "pengeluaran") };
   const currentRows = transactions.filter((tx) => inRange(tx.created_at, currentStart, currentEnd));
   const previousRows = transactions.filter((tx) => inRange(tx.created_at, previousStart, previousEnd));
   const current = { income: rowsTotal(currentRows, "pemasukan"), expense: rowsTotal(currentRows, "pengeluaran") };
@@ -51,6 +52,10 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
         <nav>{(["week", "month", "year"] as const).map((value) => <Link className={period === value ? "active" : ""} href={`/analytics?period=${value}`} key={value}>{value}</Link>)}</nav>
       </section>
       <section className="analytics-grid">
+        <div className="analytics-lifetime">
+          <article className="card analytics-total"><div><span>All-time income</span><small>Across all transactions</small></div><ArrowUpRight /><strong>{currency.format(allTime.income)}</strong></article>
+          <article className="card analytics-total expense"><div><span>All-time expense</span><small>Across all transactions</small></div><ArrowDownRight /><strong>{currency.format(allTime.expense)}</strong></article>
+        </div>
         <article className="card analytics-flow">
           <div className="card-title"><div><span>Cash flow</span><h2>Income vs expense</h2></div></div>
           <div className="chart-legend"><span><i className="income-dot" />Income</span><span><i className="expense-dot" />Expense</span></div>

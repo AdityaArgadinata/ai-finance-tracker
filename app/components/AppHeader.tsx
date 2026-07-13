@@ -1,4 +1,5 @@
-import { Bell, ChevronRight, CircleUserRound, LogOut, Menu, WalletCards } from "lucide-react";
+import { Bell, ChevronRight, CircleUserRound, LogOut, Menu } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { logout } from "@/app/actions/auth";
 import { createAuthClient } from "@/lib/supabase-auth";
@@ -19,7 +20,7 @@ export async function AppHeader({ active }: { active: string }) {
 
   return (
     <header className="topbar">
-      <Link className="brand" href="/"><WalletCards /> Expanse</Link>
+      <Link className="brand" href="/"><Image src="/normiuz.png" alt="" width={30} height={30} priority /> Normiuz</Link>
       <nav className="nav" aria-label="Main navigation">
         {links.map(([label, href]) => <Link className={active === label.toLowerCase() ? "active" : ""} href={href} key={href}>{label}</Link>)}
       </nav>

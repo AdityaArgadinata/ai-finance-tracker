@@ -43,6 +43,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
   const inRange = (createdAt: string, start: Date, end: Date) => { const date = new Date(createdAt); return date >= start && date <= end; };
   const transactions = allTransactions.filter((tx) => inRange(tx.created_at, currentStart, currentEnd));
   const previousTransactions = allTransactions.filter((tx) => inRange(tx.created_at, previousStart, previousEnd));
+  const totalIncome = allTransactions.filter((tx) => tx.jenis === "pemasukan").reduce((sum, tx) => sum + tx.nominal, 0);
+  const totalExpense = allTransactions.filter((tx) => tx.jenis === "pengeluaran").reduce((sum, tx) => sum + tx.nominal, 0);
+  const totalBalance = totalIncome - totalExpense;
   const income = transactions.filter((tx) => tx.jenis === "pemasukan").reduce((sum, tx) => sum + tx.nominal, 0);
   const expense = transactions.filter((tx) => tx.jenis === "pengeluaran").reduce((sum, tx) => sum + tx.nominal, 0);
   const balance = income - expense;
@@ -76,7 +79,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
   const categories = [...transactions.filter((tx) => tx.jenis === "pengeluaran").reduce((map, tx) => map.set(tx.kategori, (map.get(tx.kategori) ?? 0) + tx.nominal), new Map<string, number>())]
     .sort((a, b) => b[1] - a[1]);
   const topCategory = categories[0];
-  const balanceChange = income ? Math.round((balance / income) * 100) : 0;
+  const totalBalanceChange = totalIncome ? Math.round((totalBalance / totalIncome) * 100) : 0;
   const periodLabel = period[0].toUpperCase() + period.slice(1);
   const periodName = period === "week" ? "Week" : period === "month" ? "Month" : "Year";
   const rangeLabel = (start: Date, end: Date) => {
@@ -102,9 +105,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
       <section className="dashboard-grid">
         <article className="card balance-card">
           <div className="card-title"><h2>Total balance</h2></div>
-          <p className="muted">Available across all accounts</p>
-          <strong>{currency.format(balance)}</strong>
-          <div className="balance-change"><TrendingUp /> {balanceChange}% <span>of total income</span></div>
+          <p className="muted all-time-label">All-time across all transactions</p>
+          <strong>{currency.format(totalBalance)}</strong>
+          <div className="balance-change"><TrendingUp /> {totalBalanceChange}% <span>of total income</span></div>
         </article>
 
         <article className="card cashflow-card" id="analytics">
