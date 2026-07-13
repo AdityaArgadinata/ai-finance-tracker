@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Dashboard Keuangan",
+  title: "Normiuz",
   description: "Dashboard keuangan dengan analitik transaksi real-time",
+  icons: { icon: "/normiuz.png", apple: "/normiuz.png" },
 };
 
 export default function RootLayout({
