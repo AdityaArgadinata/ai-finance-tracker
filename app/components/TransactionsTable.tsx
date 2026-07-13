@@ -1,22 +1,27 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Pencil, Plus, Trash2, X } from "lucide-react";
-import { createTransaction, deleteTransaction, updateTransaction } from "@/app/actions/transactions";
+import { useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { ChevronLeft, ChevronRight, Download, Pencil, Plus, Trash2, Upload, X } from "lucide-react";
+import { createTransaction, deleteTransaction, importTransactions, updateTransaction } from "@/app/actions/transactions";
 import type { Transaction } from "@/lib/supabase";
 import { translateCategory } from "@/lib/utils";
 
 const PAGE_SIZE = 10;
-const STANDARD_CATEGORIES = ["Makanan & Minuman", "Rokok", "Transportasi", "Belanja", "Tagihan & Utilitas", "Hiburan", "Kesehatan", "Pendidikan", "Gaji", "Investasi", "Bisnis", "Lain-lain"];
+const STANDARD_CATEGORIES = ["Cafe", "Date", "Makanan & Minuman", "Rokok", "Transportasi", "Belanja", "Tagihan & Utilitas", "Hiburan", "Kesehatan", "Pendidikan", "Gaji", "Investasi", "Bisnis", "Lain-lain"];
 const currency = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
 const date = new Intl.DateTimeFormat("id-ID", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
 export function TransactionsTable({ transactions }: { transactions: Transaction[] }) {
+  const router = useRouter();
   const [page, setPage] = useState(1);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [category, setCategory] = useState("");
   const [editing, setEditing] = useState<Transaction | null>();
+  const [importing, setImporting] = useState(false);
+  const [notice, setNotice] = useState<{ message: string; error?: boolean }>();
+  const fileInput = useRef<HTMLInputElement>(null);
   const [now] = useState(() => new Date());
   const categories = useMemo(() => [...new Set(transactions.map((tx) => tx.kategori))].sort(), [transactions]);
   const availableCategories = useMemo(() => [...new Set([...STANDARD_CATEGORIES, ...categories])], [categories]);
@@ -31,15 +36,33 @@ export function TransactionsTable({ transactions }: { transactions: Transaction[
   const rows = filtered.slice(start, start + PAGE_SIZE);
   const changeFilter = (setter: (value: string) => void, value: string) => { setter(value); setPage(1); };
   const clearFilters = () => { setStartDate(""); setEndDate(""); setCategory(""); setPage(1); };
+  const importFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    setNotice(undefined);
+    const data = new FormData();
+    data.set("file", file);
+    try {
+      const result = await importTransactions(data);
+      setNotice(result.error ? { message: result.error, error: true } : { message: `${result.count} transactions imported${result.skipped ? `, ${result.skipped} skipped` : ""}.` });
+      if (result.count) router.refresh();
+    } catch {
+      setNotice({ message: "Import failed. Please try again.", error: true });
+    } finally {
+      setImporting(false);
+      event.target.value = "";
+    }
+  };
 
   return (
     <section className="transactions-card">
+      <div className="transactions-toolbar"><div className="excel-actions"><button onClick={() => location.assign("/api/transactions/export")}><Download /> Export</button><button disabled={importing} onClick={() => fileInput.current?.click()}><Upload /> {importing ? "Importing…" : "Import"}</button><input ref={fileInput} type="file" onChange={importFile} /></div>{notice && <p className={`import-notice${notice.error ? " error" : ""}`}>{notice.message}</p>}<button className="add-transaction" onClick={() => setEditing(null)}><Plus /> Add transaction</button></div>
       <div className="table-filters">
         <label><span>From</span><input type="date" value={startDate} max={endDate || undefined} onChange={(event) => changeFilter(setStartDate, event.target.value)} /></label>
         <label><span>To</span><input type="date" value={endDate} min={startDate || undefined} onChange={(event) => changeFilter(setEndDate, event.target.value)} /></label>
         <label><span>Category</span><select value={category} onChange={(event) => changeFilter(setCategory, event.target.value)}><option value="">All categories</option>{categories.map((value) => <option value={value} key={value}>{translateCategory(value)}</option>)}</select></label>
         {(startDate || endDate || category) && <button className="clear-filters" onClick={clearFilters}><X /> Clear</button>}
-        <button className="add-transaction" onClick={() => setEditing(null)}><Plus /> Add transaction</button>
       </div>
       <div className="transactions-head"><span>Date</span><span>Description</span><span>Category</span><span>Type</span><span>Amount</span><span /></div>
       {rows.map((tx) => (

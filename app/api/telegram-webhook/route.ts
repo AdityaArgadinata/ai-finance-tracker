@@ -143,6 +143,8 @@ ATURAN PARSIAL NOMINAL:
 
 ATURAN KATEGORI & JENIS:
 - Kategori harus dipilih dari daftar standar berdasarkan contoh detail:
+   - "Cafe": transaksi yang secara eksplisit menyebut cafe, kafe, coffee shop, atau nongkrong di cafe
+   - "Date": transaksi yang secara eksplisit menyebut date atau kencan
    - "Makanan & Minuman": nasi, mie, kopi, teh, air, snack, kerupuk, coklat, permen, minuman bersoda
    - "Rokok": rokok, vape, pod, tembakau
    - "Transportasi": bensin, solar, tol, taxi, ojek, parkir, bus, kereta
@@ -163,6 +165,9 @@ CONTOH PARSING BELANJA:
 - Input: "beli pasta gigi 12k" → item="pasta gigi", nominal=12000, kategori="Belanja"
 
 CONTOH PARSING LAINNYA:
+- Input: "cafe 20k" → item="Cafe", nominal=20000, jenis="pengeluaran", kategori="Cafe"
+- Input: "ngopi cafe 35k" → item="ngopi", nominal=35000, jenis="pengeluaran", kategori="Cafe"
+- Input: "date makan 100k" → item="makan", nominal=100000, jenis="pengeluaran", kategori="Date"
 - Input: "beli nasi padang 15k" → item="nasi padang", nominal=15000, jenis="pengeluaran", kategori="Makanan & Minuman"
 - Input: "beli kopi 8k" → item="kopi", nominal=8000, jenis="pengeluaran", kategori="Makanan & Minuman"
 - Input: "gaji bulanan 5000k" → item="gaji bulanan", nominal=5000000, jenis="pemasukan", kategori="Gaji"`
@@ -178,6 +183,8 @@ CONTOH PARSING LAINNYA:
     }
 
     const parsed: GroqParsedTransaction = JSON.parse(raw);
+    if (/\b(?:cafe|kafe|coffee shop)\b/i.test(msg.text)) parsed.kategori = "Cafe";
+    else if (/\b(?:date|kencan)\b/i.test(msg.text)) parsed.kategori = "Date";
 
     // 2. Validate required fields
     if ((parsed.jenis !== "pemasukan" && parsed.jenis !== "pengeluaran") || !parsed.kategori?.trim() || !parsed.item?.trim() || !Number.isFinite(parsed.nominal) || parsed.nominal <= 0) {
