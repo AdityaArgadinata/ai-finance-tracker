@@ -4,6 +4,11 @@ import { useEffect, useRef, type ReactNode } from "react";
 
 export function DismissibleDetails({ className, children }: { className: string; children: ReactNode }) {
   const ref = useRef<HTMLDetailsElement>(null);
+  const positionCard = () => {
+    const details = ref.current;
+    const summary = details?.querySelector(":scope > summary");
+    if (details?.open && summary) details.style.setProperty("--popover-top", `${summary.getBoundingClientRect().bottom + 14}px`);
+  };
 
   useEffect(() => {
     const close = (event: PointerEvent) => {
@@ -18,5 +23,5 @@ export function DismissibleDetails({ className, children }: { className: string;
     return () => document.removeEventListener("pointerdown", close);
   }, []);
 
-  return <details className={className} ref={ref}>{children}</details>;
+  return <details className={className} ref={ref} onToggle={positionCard}>{children}</details>;
 }
