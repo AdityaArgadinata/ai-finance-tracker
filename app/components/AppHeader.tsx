@@ -20,7 +20,7 @@ export async function AppHeader({ active }: { active: string }) {
 
   return (
     <header className="topbar">
-      <Link className="brand" href="/"><Image src="/normiuz.png" alt="" width={30} height={30} priority /> Normiuz</Link>
+      <Link className="brand" href="/"><Image src="/normiuz.png" alt="" width={30} height={30} priority unoptimized /> Normiuz</Link>
       <nav className="nav" aria-label="Main navigation">
         {links.map(([label, href]) => <Link className={active === label.toLowerCase() ? "active" : ""} href={href} key={href}>{label}</Link>)}
       </nav>
