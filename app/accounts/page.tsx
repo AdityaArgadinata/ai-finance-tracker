@@ -1,10 +1,9 @@
-import { BadgeCheck, CalendarDays, Clock3, KeyRound, Mail, Sparkles, Trash2 } from "lucide-react";
+import { BadgeCheck, CalendarDays, Clock3, KeyRound, Mail } from "lucide-react";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { AppHeader } from "@/app/components/AppHeader";
 import { createAuthClient } from "@/lib/supabase-auth";
 import { TelegramIntegration } from "@/app/components/TelegramIntegration";
-import { removeGroqApiKey, saveGroqApiKey } from "@/app/actions/ai-settings";
 
 const date = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" });
 
@@ -50,12 +49,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           </dl>
         </article>
 
-        <TelegramIntegration telegram={telegram ? { chatId: telegram.chat_id, linkedAt: date.format(new Date(telegram.linked_at)) } : null} linkCode={activeCode ? { code: activeCode.code, expiresAt: date.format(new Date(activeCode.expires_at)) } : null} />
-
-        <article className="telegram-card ai-key-card">
-          <header><div><span>AI provider</span><h2>Groq API key</h2></div><Sparkles /></header>
-          <div className="ai-key-content"><div><strong>{aiSettings ? "Groq connected" : "Use your own Groq account"}</strong><p>{aiSettings ? `${aiSettings.key_hint} · Updated ${date.format(new Date(aiSettings.updated_at))}` : "Your key is validated by Groq and stored encrypted in Supabase Vault."}</p>{aiStatus === "invalid" && <small className="ai-key-error">The API key is invalid or could not connect to Groq.</small>}</div><form action={saveGroqApiKey}><input required type="password" name="api_key" autoComplete="off" placeholder={aiSettings ? "Enter a new key to replace it" : "gsk_..."} /><button><KeyRound /> {aiSettings ? "Replace key" : "Save key"}</button></form>{aiSettings && <form action={removeGroqApiKey}><button className="remove-ai-key" aria-label="Remove Groq API key"><Trash2 /></button></form>}</div>
-        </article>
+        <TelegramIntegration telegram={telegram ? { chatId: telegram.chat_id, linkedAt: date.format(new Date(telegram.linked_at)) } : null} linkCode={activeCode ? { code: activeCode.code, expiresAt: date.format(new Date(activeCode.expires_at)) } : null} groq={aiSettings ? { keyHint: aiSettings.key_hint, updatedAt: date.format(new Date(aiSettings.updated_at)) } : null} aiStatus={aiStatus} />
       </section>
     </main>
   );
