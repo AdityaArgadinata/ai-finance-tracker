@@ -5,6 +5,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { AppHeader } from "@/app/components/AppHeader";
+import { SpendingCategories } from "@/app/components/SpendingCategories";
 import { getTransactions } from "@/lib/supabase";
 import { createAuthClient } from "@/lib/supabase-auth";
 import { translateCategory } from "@/lib/utils";
@@ -130,11 +131,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
           </div>
         </article>
 
-        <article className="card category-card">
-          <div className="card-title"><h2>Spending categories</h2></div>
-          <ul>{categories.map(([category, amount], index) => <li key={category}><span className="round-icon">{index === 0 ? <TrendingDown /> : <CreditCard />}</span><div><b>{translateCategory(category)}</b><small>{currency.format(amount)}</small></div><em>{expense ? `${Math.round((amount / expense) * 100)}%` : "—"}</em></li>)}</ul>
-          {!categories.length && <p className="category-empty">No expenses in this period.</p>}
-        </article>
+        <SpendingCategories categories={categories} expense={expense} />
 
         <article className="card activity-card" id="transactions">
           <div className="activity-head"><span>Recent activity</span><button><CalendarDays /></button></div>
