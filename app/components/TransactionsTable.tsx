@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, Download, Pencil, Plus, Trash2, Upload, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, ListFilter, Pencil, Plus, Trash2, Upload, X } from "lucide-react";
 import { createTransaction, deleteTransaction, importTransactions, updateTransaction } from "@/app/actions/transactions";
 import type { Transaction } from "@/lib/supabase";
 import { translateCategory } from "@/lib/utils";
@@ -18,6 +18,7 @@ export function TransactionsTable({ transactions }: { transactions: Transaction[
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [category, setCategory] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
   const [editing, setEditing] = useState<Transaction | null>();
   const [deleting, setDeleting] = useState<Transaction | null>(null);
   const [importing, setImporting] = useState(false);
@@ -57,13 +58,22 @@ export function TransactionsTable({ transactions }: { transactions: Transaction[
   };
 
   return (
+    <>
+    <section className="page-heading">
+      <div><span>Expanse</span><h1>Transactions</h1></div>
+      <button className="add-transaction" onClick={() => setEditing(null)}><Plus /> Add transaction</button>
+    </section>
     <section className="transactions-card">
-      <div className="transactions-toolbar"><div className="excel-actions"><button onClick={() => location.assign("/api/transactions/export")}><Download /> Export</button><button disabled={importing} onClick={() => fileInput.current?.click()}><Upload /> {importing ? "Importing…" : "Import"}</button><input ref={fileInput} type="file" onChange={importFile} /></div>{notice && <p className={`import-notice${notice.error ? " error" : ""}`}>{notice.message}</p>}<button className="add-transaction" onClick={() => setEditing(null)}><Plus /> Add transaction</button></div>
-      <div className="table-filters">
+      <div className="transactions-toolbar"><div className="excel-actions"><button onClick={() => location.assign("/api/transactions/export")}><Download /> Export</button><button disabled={importing} onClick={() => fileInput.current?.click()}><Upload /> {importing ? "Importing…" : "Import"}</button><input ref={fileInput} type="file" onChange={importFile} /></div>{notice && <p className={`import-notice${notice.error ? " error" : ""}`}>{notice.message}</p>}<button className={`filter-toggle${showFilters ? " active" : ""}`} aria-expanded={showFilters} aria-controls="transaction-filters" onClick={() => setShowFilters((value) => !value)}><ListFilter /> Filter</button></div>
+      <div className={`filter-panel${showFilters ? " open" : ""}`} aria-hidden={!showFilters} inert={!showFilters}>
+      <div className="filter-panel-inner">
+      <div className="table-filters" id="transaction-filters">
         <label><span>From</span><input type="date" value={startDate} max={endDate || undefined} onChange={(event) => changeFilter(setStartDate, event.target.value)} /></label>
         <label><span>To</span><input type="date" value={endDate} min={startDate || undefined} onChange={(event) => changeFilter(setEndDate, event.target.value)} /></label>
         <label><span>Category</span><select value={category} onChange={(event) => changeFilter(setCategory, event.target.value)}><option value="">All categories</option>{categories.map((value) => <option value={value} key={value}>{translateCategory(value)}</option>)}</select></label>
         {(startDate || endDate || category) && <button className="clear-filters" onClick={clearFilters}><X /> Clear</button>}
+      </div>
+      </div>
       </div>
       <div className="transactions-head"><span>Date</span><span>Description</span><span>Category</span><span>Type</span><span>Amount</span><span /></div>
       {rows.map((tx) => (
@@ -88,5 +98,6 @@ export function TransactionsTable({ transactions }: { transactions: Transaction[
       {editing !== undefined && <div className="transaction-modal" role="dialog" aria-modal="true" aria-labelledby="transaction-form-title"><form action={async (formData) => { if (editing) await updateTransaction(formData); else await createTransaction(formData); setEditing(undefined); }}><header><h2 id="transaction-form-title">{editing ? "Edit transaction" : "Add transaction"}</h2><button type="button" aria-label="Close" onClick={() => setEditing(undefined)}><X /></button></header>{editing && <input type="hidden" name="id" value={editing.id} />}<label><span>Date</span><input required type="datetime-local" name="created_at" defaultValue={new Date((editing ? new Date(editing.created_at) : now).getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16)} /></label><label><span>Description</span><input required maxLength={150} name="item" defaultValue={editing?.item} /></label><label><span>Category</span><select required name="kategori" defaultValue={editing?.kategori ?? "Makanan & Minuman"}>{availableCategories.map((value) => <option value={value} key={value}>{value}</option>)}</select></label><label><span>Type</span><select required name="jenis" defaultValue={editing?.jenis ?? "pengeluaran"}><option value="pengeluaran">Expense</option><option value="pemasukan">Income</option></select></label><label><span>Amount</span><input required min="1" step="1" type="number" name="nominal" defaultValue={editing?.nominal} /></label><div className="transaction-modal-actions"><button type="button" onClick={() => setEditing(undefined)}>Cancel</button><button type="submit">Save transaction</button></div></form></div>}
       {deleting && <div className="transaction-modal" role="dialog" aria-modal="true" aria-labelledby="delete-transaction-title"><form className="delete-transaction-modal" action={async (formData) => { await deleteTransaction(formData); setDeleting(null); }}><header><h2 id="delete-transaction-title">Delete transaction?</h2><button type="button" aria-label="Close" onClick={() => setDeleting(null)}><X /></button></header><p><strong>{deleting.item}</strong><span>{translateCategory(deleting.kategori)} · {currency.format(deleting.nominal)}</span>This action cannot be undone.</p><input type="hidden" name="id" value={deleting.id} /><div className="transaction-modal-actions"><button type="button" onClick={() => setDeleting(null)}>Cancel</button><button type="submit">Delete transaction</button></div></form></div>}
     </section>
+    </>
   );
 }

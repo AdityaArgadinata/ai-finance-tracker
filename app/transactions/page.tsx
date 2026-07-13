@@ -8,10 +8,6 @@ export default async function TransactionsPage() {
   return (
     <main className="shell">
       <AppHeader active="transactions" />
-      <section className="page-heading">
-        <div><span>Expanse</span><h1>Transactions</h1></div>
-        <p>{transactions.length} records</p>
-      </section>
       <TransactionsTable transactions={transactions} />
     </main>
   );
