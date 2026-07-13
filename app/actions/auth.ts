@@ -11,7 +11,7 @@ export async function loginWithGoogle() {
   if (!host) redirect("/login?error=config");
 
   const protocol = requestHeaders.get("x-forwarded-proto") ?? "http";
-  const origin = (process.env.NEXT_PUBLIC_SITE_URL ?? `${protocol}://${host}`).replace(/\/$/, "");
+  const origin = `${protocol}://${host}`;
   const supabase = await createAuthClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
