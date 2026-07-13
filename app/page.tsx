@@ -114,8 +114,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
           <div className="card-title"><h2>Cash flow</h2></div>
           <div className="cashflow-total"><span>{periodLabel} net flow</span><strong>{currency.format(balance)}</strong></div>
           <div className="chart-legend"><span><i className="income-dot" />Income</span><span><i className="expense-dot" />Expense</span></div>
-          <div className="bars">{cashflow.map(({ label, income, expense }, index) => <div className="bar-group" key={`${label}-${index}`}><span className="chart-tooltip"><b>{label}</b><small><i className="income-dot" />Income <strong>{currency.format(income)}</strong></small><small><i className="expense-dot" />Expense <strong>{currency.format(expense)}</strong></small></span><i className="income-bar" style={{ height: `${Math.max((income / maxCashflow) * 100, income ? 6 : 0)}%` }} /><i className="expense-bar" style={{ height: `${Math.max((expense / maxCashflow) * 100, expense ? 6 : 0)}%` }} /></div>)}</div>
-          <div className="days">{cashflow.map(({ label }, index) => <span key={`${label}-${index}`}>{label}</span>)}</div>
+          <div className="bars" style={{ gridTemplateColumns: `repeat(${bucketCount},minmax(0,1fr))` }}>{cashflow.map(({ label, income, expense }, index) => <div className="bar-group" key={`${label}-${index}`}><span className="chart-tooltip"><b>{label}</b><small><i className="income-dot" />Income <strong>{currency.format(income)}</strong></small><small><i className="expense-dot" />Expense <strong>{currency.format(expense)}</strong></small></span><i className="income-bar" style={{ height: `${Math.max((income / maxCashflow) * 100, income ? 6 : 0)}%` }} /><i className="expense-bar" style={{ height: `${Math.max((expense / maxCashflow) * 100, expense ? 6 : 0)}%` }} /></div>)}</div>
+          <div className="days" style={{ gridTemplateColumns: `repeat(${bucketCount},minmax(0,1fr))` }}>{cashflow.map(({ label }, index) => <span key={`${label}-${index}`}>{label}</span>)}</div>
         </article>
 
         <article className="lime-spend">
