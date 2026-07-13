@@ -19,6 +19,7 @@ export function TransactionsTable({ transactions }: { transactions: Transaction[
   const [endDate, setEndDate] = useState("");
   const [category, setCategory] = useState("");
   const [editing, setEditing] = useState<Transaction | null>();
+  const [deleting, setDeleting] = useState<Transaction | null>(null);
   const [importing, setImporting] = useState(false);
   const [notice, setNotice] = useState<{ message: string; error?: boolean }>();
   const fileInput = useRef<HTMLInputElement>(null);
@@ -72,7 +73,7 @@ export function TransactionsTable({ transactions }: { transactions: Transaction[
           <span>{translateCategory(tx.kategori)}</span>
           <span className={`type ${tx.jenis}`}>{tx.jenis}</span>
           <b className={tx.jenis === "pemasukan" ? "income" : "expense"}>{tx.jenis === "pemasukan" ? "+ " : "− "}{currency.format(tx.nominal)}</b>
-          <span className="transaction-actions"><button aria-label={`Edit ${tx.item}`} onClick={() => setEditing(tx)}><Pencil /></button><form action={deleteTransaction} onSubmit={(event) => { if (!confirm(`Delete ${tx.item}?`)) event.preventDefault(); }}><input type="hidden" name="id" value={tx.id} /><button aria-label={`Delete ${tx.item}`}><Trash2 /></button></form></span>
+          <span className="transaction-actions"><button aria-label={`Edit ${tx.item}`} onClick={() => setEditing(tx)}><Pencil /></button><button aria-label={`Delete ${tx.item}`} onClick={() => setDeleting(tx)}><Trash2 /></button></span>
         </div>
       ))}
       {!rows.length && <div className="empty-transactions">No transactions yet.</div>}
@@ -85,6 +86,7 @@ export function TransactionsTable({ transactions }: { transactions: Transaction[
         </div>
       </footer>
       {editing !== undefined && <div className="transaction-modal" role="dialog" aria-modal="true" aria-labelledby="transaction-form-title"><form action={async (formData) => { if (editing) await updateTransaction(formData); else await createTransaction(formData); setEditing(undefined); }}><header><h2 id="transaction-form-title">{editing ? "Edit transaction" : "Add transaction"}</h2><button type="button" aria-label="Close" onClick={() => setEditing(undefined)}><X /></button></header>{editing && <input type="hidden" name="id" value={editing.id} />}<label><span>Date</span><input required type="datetime-local" name="created_at" defaultValue={new Date((editing ? new Date(editing.created_at) : now).getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16)} /></label><label><span>Description</span><input required maxLength={150} name="item" defaultValue={editing?.item} /></label><label><span>Category</span><select required name="kategori" defaultValue={editing?.kategori ?? "Makanan & Minuman"}>{availableCategories.map((value) => <option value={value} key={value}>{value}</option>)}</select></label><label><span>Type</span><select required name="jenis" defaultValue={editing?.jenis ?? "pengeluaran"}><option value="pengeluaran">Expense</option><option value="pemasukan">Income</option></select></label><label><span>Amount</span><input required min="1" step="1" type="number" name="nominal" defaultValue={editing?.nominal} /></label><div className="transaction-modal-actions"><button type="button" onClick={() => setEditing(undefined)}>Cancel</button><button type="submit">Save transaction</button></div></form></div>}
+      {deleting && <div className="transaction-modal" role="dialog" aria-modal="true" aria-labelledby="delete-transaction-title"><form className="delete-transaction-modal" action={async (formData) => { await deleteTransaction(formData); setDeleting(null); }}><header><h2 id="delete-transaction-title">Delete transaction?</h2><button type="button" aria-label="Close" onClick={() => setDeleting(null)}><X /></button></header><p><strong>{deleting.item}</strong><span>{translateCategory(deleting.kategori)} · {currency.format(deleting.nominal)}</span>This action cannot be undone.</p><input type="hidden" name="id" value={deleting.id} /><div className="transaction-modal-actions"><button type="button" onClick={() => setDeleting(null)}>Cancel</button><button type="submit">Delete transaction</button></div></form></div>}
     </section>
   );
 }
