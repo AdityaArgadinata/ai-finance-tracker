@@ -1,6 +1,7 @@
 import { Bell, ChevronRight, CircleUserRound, LogOut, Menu } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { logout } from "@/app/actions/auth";
 import { createAuthClient } from "@/lib/supabase-auth";
 import { DismissibleDetails } from "@/app/components/DismissibleDetails";
@@ -15,8 +16,9 @@ const links = [
 
 export async function AppHeader({ active }: { active: string }) {
   const supabase = await createAuthClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  const name = user?.user_metadata.full_name ?? user?.user_metadata.name ?? user?.email?.split("@")[0] ?? "Expanse User";
+  const { data: { user }, error } = await supabase.auth.getUser();
+  const name = user?.user_metadata.full_name ?? user?.user_metadata.name ?? user?.email?.split("@")[0];
+  if (error || !user || !name) redirect("/login");
 
   return (
     <header className="topbar">
