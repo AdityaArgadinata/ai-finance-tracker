@@ -80,7 +80,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
           {!expenses.length && <p className="category-empty">No expense transactions yet.</p>}
         </article>
 
-        <article className="analytics-insight"><Lightbulb /><div><span>{periodName} insight</span><h2>{insight}</h2><p>{current.income ? `${Math.round((current.expense / current.income) * 100)}% of income used this ${periodName}.` : `No income this ${periodName}.`}</p></div></article>
+        <article className="analytics-insight"><div><span><Lightbulb />{periodName} insight</span><h2>{insight}</h2><p>{current.income ? `${Math.round((current.expense / current.income) * 100)}% of income used this ${periodName}.` : `No income this ${periodName}.`}</p></div></article>
       </section>
     </main>
   );
