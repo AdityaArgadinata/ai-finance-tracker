@@ -1,4 +1,4 @@
-import { Bell, ChevronRight, CircleUserRound, LogOut, Menu } from "lucide-react";
+import { Bell, BookOpen, ChartNoAxesCombined, ChevronRight, CircleUserRound, House, LogOut, ReceiptText } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -7,12 +7,12 @@ import { createAuthClient } from "@/lib/supabase-auth";
 import { DismissibleDetails } from "@/app/components/DismissibleDetails";
 
 const links = [
-  ["Dashboard", "/"],
-  ["Transactions", "/transactions"],
-  ["Analytics", "/analytics"],
-  ["Accounts", "/accounts"],
-  ["Tutorial", "/tutorial"],
-];
+  ["Dashboard", "/", House],
+  ["Transactions", "/transactions", ReceiptText],
+  ["Analytics", "/analytics", ChartNoAxesCombined],
+  ["Accounts", "/accounts", CircleUserRound],
+  ["Tutorial", "/tutorial", BookOpen],
+] as const;
 
 export async function AppHeader({ active }: { active: string }) {
   const supabase = await createAuthClient();
@@ -27,12 +27,6 @@ export async function AppHeader({ active }: { active: string }) {
         {links.map(([label, href]) => <Link className={active === label.toLowerCase() ? "active" : ""} href={href} key={href}>{label}</Link>)}
       </nav>
       <div className="actions">
-        <DismissibleDetails className="mobile-nav">
-          <summary aria-label="Open navigation"><Menu /></summary>
-          <nav className="mobile-links" aria-label="Mobile navigation">
-            {links.map(([label, href]) => <Link className={active === label.toLowerCase() ? "active" : ""} href={href} key={href}>{label}</Link>)}
-          </nav>
-        </DismissibleDetails>
         <DismissibleDetails className="notification-menu">
           <summary aria-label="Notifications"><Bell /></summary>
           <div className="profile-popover notification-popover"><div><Bell /><span>Notifications</span><strong>Coming soon</strong></div></div>
@@ -49,6 +43,9 @@ export async function AppHeader({ active }: { active: string }) {
           </div>
         </DismissibleDetails>
       </div>
+      <nav className="mobile-dock" aria-label="Mobile navigation">
+        {links.map(([label, href, Icon]) => <Link aria-label={label} className={active === label.toLowerCase() ? "active" : ""} href={href} key={href}><Icon /></Link>)}
+      </nav>
     </header>
   );
 }

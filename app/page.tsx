@@ -24,7 +24,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
   const [{ data: { user } }, allTransactions] = await Promise.all([supabase.auth.getUser(), getTransactions()]);
   if (!user) redirect("/login");
   const name = String(user.user_metadata.full_name ?? user.user_metadata.name ?? user.email?.split("@")[0] ?? "User").split(" ")[0];
-  const anchor = allTransactions[0] ? new Date(allTransactions[0].created_at) : new Date();
+  const anchor = new Date();
   const currentStart = period === "week"
     ? new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() - 6)
     : period === "month"

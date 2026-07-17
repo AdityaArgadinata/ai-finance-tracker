@@ -12,7 +12,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
   const requestedPeriod = (await searchParams).period;
   const period: Period = requestedPeriod === "week" || requestedPeriod === "year" ? requestedPeriod : "month";
   const transactions = await getTransactions();
-  const anchor = transactions[0] ? new Date(transactions[0].created_at) : new Date();
+  const anchor = new Date();
   const currentStart = period === "week" ? new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() - 6) : period === "month" ? new Date(anchor.getFullYear(), anchor.getMonth(), 1) : new Date(anchor.getFullYear(), 0, 1);
   const currentEnd = period === "week" ? new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate(), 23, 59, 59, 999) : period === "month" ? new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0, 23, 59, 59, 999) : new Date(anchor.getFullYear(), 11, 31, 23, 59, 59, 999);
   const previousStart = period === "week" ? new Date(currentStart.getFullYear(), currentStart.getMonth(), currentStart.getDate() - 7) : period === "month" ? new Date(anchor.getFullYear(), anchor.getMonth() - 1, 1) : new Date(anchor.getFullYear() - 1, 0, 1);
