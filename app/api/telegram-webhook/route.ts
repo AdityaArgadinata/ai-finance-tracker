@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import Groq from "groq-sdk";
 import { createClient } from "@supabase/supabase-js";
 import { normalizeTelegramTransaction, type TelegramParsedTransaction } from "@/lib/telegram-transaction";
 
@@ -27,7 +26,7 @@ const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!,
 );
-const routerBaseUrl = process.env.NINEROUTER_BASE_URL ?? "https://9router.com/v1";
+const routerBaseUrl = (process.env.NINEROUTER_BASE_URL ?? "https://9router.com/v1").replace(/\/$/, "");
 
 const FORMAT_ERROR = [
   "❌ Format transaksi tidak dikenali.",
@@ -94,17 +93,15 @@ export async function POST(req: NextRequest) {
       return replyTelegram(chatId, "❌ 9Router is not connected.\n\nOpen Expanse → Account, save your 9Router API key and model, then try again.");
     }
 
-    const groq = new Groq({ apiKey: routerApiKey, baseURL: routerBaseUrl });
-
     if (!/\d/.test(msg.text)) {
       return replyTelegram(chatId, FORMAT_ERROR);
     }
 
-    // 1. Call Groq
-    const completion = await groq.chat.completions.create({
-      model: routerModel,
-      response_format: { type: "json_object" },
-      messages: [
+    // 1. Call 9Router
+    const routerResponse = await fetch(`${routerBaseUrl}/chat/completions`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${routerApiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ model: routerModel, response_format: { type: "json_object" }, messages: [
         {
           role: "system",
           content: `Anda adalah asisten keuangan yang mengekstrak transaksi dari pesan obrolan pengguna ke format JSON:
@@ -160,10 +157,13 @@ CONTOH PARSING LAINNYA:
 - Input: "gaji bulanan 5000k" → item="gaji bulanan", nominal=5000000, jenis="pemasukan", kategori="Gaji"`
         },
         { role: "user", content: msg.text },
-      ],
+      ] }),
     });
+    const responseText = await routerResponse.text();
+    if (!routerResponse.ok) throw new Error(`9Router ${routerResponse.status}: ${responseText}`);
+    const completion = JSON.parse(responseText.split(/\ndata:/, 1)[0]) as GroqResponse;
 
-    const raw = (completion as GroqResponse).choices[0]?.message?.content;
+    const raw = completion.choices[0]?.message?.content;
     if (!raw) {
       return replyTelegram(chatId, "❌ Failed to process the message.");
     }
