@@ -5,6 +5,10 @@ export interface TelegramParsedTransaction {
   nominal: number;
 }
 
+export function parse9RouterResponse(text: string) {
+  return JSON.parse(text.replace(/\s*data:\s*\[DONE\]\s*$/, ""));
+}
+
 export function parseTelegramNominal(text: string) {
   const raw = [...text.toLowerCase().matchAll(/\d+(?:[.,]\d+)*(?:\s*(?:juta|jt|ribu|rb|k))?/g)].at(-1)?.[0].replace(/\s/g, "");
   if (!raw) return null;

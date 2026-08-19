@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { normalizeTelegramTransaction, type TelegramParsedTransaction } from "@/lib/telegram-transaction";
+import { normalizeTelegramTransaction, parse9RouterResponse, type TelegramParsedTransaction } from "@/lib/telegram-transaction";
 
 // ── Types ────────────────────────────────────────────
 interface TelegramMessage {
@@ -161,7 +161,7 @@ CONTOH PARSING LAINNYA:
     });
     const responseText = await routerResponse.text();
     if (!routerResponse.ok) throw new Error(`9Router ${routerResponse.status}: ${responseText}`);
-    const completion = JSON.parse(responseText.split(/\ndata:/, 1)[0]) as GroqResponse;
+    const completion = parse9RouterResponse(responseText) as GroqResponse;
 
     const raw = completion.choices[0]?.message?.content;
     if (!raw) {
