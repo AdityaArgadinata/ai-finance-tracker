@@ -20,7 +20,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const [{ data: telegram }, { data: linkCode }, { data: aiSettings }] = await Promise.all([
     supabase.from("telegram_accounts").select("chat_id, linked_at").maybeSingle(),
     supabase.from("telegram_link_codes").select("code, expires_at").maybeSingle(),
-    supabase.from("user_ai_settings").select("key_hint, updated_at").maybeSingle(),
+    supabase.from("user_ai_settings").select("key_hint, model, updated_at").maybeSingle(),
   ]);
   const activeCode = linkCode && new Date(linkCode.expires_at) > new Date() ? linkCode : null;
 
@@ -48,7 +48,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           </dl>
         </article>
 
-        <TelegramIntegration telegram={telegram ? { chatId: telegram.chat_id, linkedAt: date.format(new Date(telegram.linked_at)) } : null} linkCode={activeCode ? { code: activeCode.code, expiresAt: date.format(new Date(activeCode.expires_at)) } : null} groq={aiSettings ? { keyHint: aiSettings.key_hint, updatedAt: date.format(new Date(aiSettings.updated_at)) } : null} aiStatus={aiStatus} />
+        <TelegramIntegration telegram={telegram ? { chatId: telegram.chat_id, linkedAt: date.format(new Date(telegram.linked_at)) } : null} linkCode={activeCode ? { code: activeCode.code, expiresAt: date.format(new Date(activeCode.expires_at)) } : null} groq={aiSettings ? { keyHint: aiSettings.key_hint, model: aiSettings.model, updatedAt: date.format(new Date(aiSettings.updated_at)) } : null} aiStatus={aiStatus} />
       </section>
     </main>
   );

@@ -5,7 +5,7 @@ Expanse is a personal finance assistant based on a Telegram Bot that uses Artifi
 Simply type a message naturally like _"Bought coffee 25000"_ or _"This month's salary 5000000"_, and the bot will automatically extract the information and save it to the database.
 
 ## ✨ Key Features
-- **🤖 Natural Language Processing (NLP):** Uses a cutting-edge AI model (Groq LLaMA 3.1) to read informal messages and convert them into structured data (Type, Category, Item, Amount).
+- **🤖 Natural Language Processing (NLP):** Uses a model routed through 9Router to read informal messages and convert them into structured data (Type, Category, Item, Amount).
 - **💬 Telegram Integration:** Utilizes a *Webhook* system for instant responses.
 - **🗄️ Real-time Database:** Transaction data is securely stored using Supabase (PostgreSQL).
 - **⚡ Fast & Modern:** Built on the Next.js App Router ecosystem with TypeScript support.
@@ -13,7 +13,7 @@ Simply type a message naturally like _"Bought coffee 25000"_ or _"This month's s
 ## 🛠️ Tech Stack
 - **Framework:** [Next.js](https://nextjs.org/)
 - **Language:** [TypeScript](https://www.typescriptlang.org/)
-- **AI Engine:** [Groq SDK](https://console.groq.com/) (Model `llama-3.1-8b-instant`)
+- **AI Gateway:** [9Router](https://9router.com/) (OpenAI-compatible API)
 - **Database & Auth:** Supabase
 - **Integration:** Telegram Bot API
 - **Local Tools:** Ngrok (For *webhook tunneling* in *development* mode)
@@ -23,7 +23,7 @@ Simply type a message naturally like _"Bought coffee 25000"_ or _"This month's s
 ### 1. Prerequisites
 Make sure you have:
 - Node.js installed on your computer.
-- A Groq account to get an API Key.
+- A 9Router account, API key, and connected AI model or combo.
 - A new Supabase project.
 - A Telegram Bot created via @BotFather (to get the *Bot Token*).
 
@@ -49,11 +49,15 @@ pnpm install
 ### 4. Configure Environment Variables
 Create a `.env.local` file in the *root* folder and fill it with your credentials:
 ```env
-GROQ_API_KEY=your_groq_api_key
 SUPABASE_URL=your_supabase_project_url
 SUPABASE_SERVICE_KEY=your_supabase_service_role_key
 TELEGRAM_BOT_TOKEN=your_telegram_bot_token
+NINEROUTER_BASE_URL=https://your-9router-host/v1
+NINEROUTER_API_KEY=your_9router_api_key
+NINEROUTER_MODEL=your_model_or_combo_id
 ```
+
+After signing in, save your 9Router API key and model ID from the Account page.
 
 ### 5. Running Server & Webhook (Local)
 Run the Next.js server:

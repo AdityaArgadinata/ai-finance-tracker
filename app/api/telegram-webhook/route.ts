@@ -27,6 +27,7 @@ const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!,
 );
+const routerBaseUrl = process.env.NINEROUTER_BASE_URL ?? "https://9router.com/v1";
 
 const FORMAT_ERROR = [
   "❌ Format transaksi tidak dikenali.",
@@ -50,6 +51,7 @@ function replyTelegram(chatId: number, text: string) {
 
 // ── Route ────────────────────────────────────────────
 export async function POST(req: NextRequest) {
+  let chatId: number | undefined;
   try {
     const update: TelegramUpdate = await req.json();
     const msg = update.message;
@@ -59,7 +61,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true }, { status: 200 });
     }
 
-    const chatId = msg.chat.id;
+    chatId = msg.chat.id;
 
     const linkCode = msg.text.trim().match(/^\/link\s+([a-f0-9]{8})$/i)?.[1].toUpperCase();
     if (linkCode) {
@@ -82,12 +84,17 @@ export async function POST(req: NextRequest) {
       return replyTelegram(chatId, "🔗 Connect Telegram from your Expanse Account page before recording transactions.");
     }
 
-    const { data: groqApiKey, error: keyError } = await supabase.rpc("get_groq_api_key", { p_user_id: telegramAccount.user_id });
-    if (keyError || !groqApiKey) {
-      return replyTelegram(chatId, "❌ Groq AI is not connected.\n\nOpen Expanse → Account → Groq API key, save your key, then try again.");
+    const [{ data: savedRouterApiKey }, { data: aiSettings }] = await Promise.all([
+      supabase.rpc("get_groq_api_key", { p_user_id: telegramAccount.user_id }),
+      supabase.from("user_ai_settings").select("model").eq("user_id", telegramAccount.user_id).maybeSingle(),
+    ]);
+    const routerApiKey = process.env.NINEROUTER_API_KEY || savedRouterApiKey;
+    const routerModel = process.env.NINEROUTER_MODEL || aiSettings?.model;
+    if (!routerApiKey || !routerModel) {
+      return replyTelegram(chatId, "❌ 9Router is not connected.\n\nOpen Expanse → Account, save your 9Router API key and model, then try again.");
     }
 
-    const groq = new Groq({ apiKey: groqApiKey });
+    const groq = new Groq({ apiKey: routerApiKey, baseURL: routerBaseUrl });
 
     if (!/\d/.test(msg.text)) {
       return replyTelegram(chatId, FORMAT_ERROR);
@@ -95,7 +102,7 @@ export async function POST(req: NextRequest) {
 
     // 1. Call Groq
     const completion = await groq.chat.completions.create({
-      model: "llama-3.1-8b-instant",
+      model: routerModel,
       response_format: { type: "json_object" },
       messages: [
         {
@@ -197,7 +204,7 @@ CONTOH PARSING LAINNYA:
     return replyTelegram(chatId, replyText);
   } catch (err) {
     console.error("Webhook error:", err);
-    // Always 200 to stop Telegram retries
+    if (chatId !== undefined) return replyTelegram(chatId, "❌ Layanan AI sedang bermasalah. Coba lagi atau periksa koneksi 9Router di halaman Account.");
   }
 
   return NextResponse.json({ ok: true }, { status: 200 });

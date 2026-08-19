@@ -4,15 +4,18 @@ import Groq from "groq-sdk";
 import { redirect } from "next/navigation";
 import { createAuthClient } from "@/lib/supabase-auth";
 
+const routerBaseUrl = process.env.NINEROUTER_BASE_URL ?? "https://9router.com/v1";
+
 export async function saveGroqApiKey(formData: FormData) {
   const apiKey = String(formData.get("api_key") ?? "").trim();
-  if (!apiKey.startsWith("gsk_") || apiKey.length < 20) redirect("/accounts?ai=invalid");
+  const model = String(formData.get("model") ?? "").trim();
+  if (!apiKey.startsWith("sk") || apiKey.length < 20 || !model) redirect("/accounts?ai=invalid");
 
-  try { await new Groq({ apiKey }).models.list(); }
+  try { await new Groq({ apiKey, baseURL: routerBaseUrl }).models.list(); }
   catch { redirect("/accounts?ai=invalid"); }
 
   const supabase = await createAuthClient();
-  const { error } = await supabase.rpc("set_groq_api_key", { p_api_key: apiKey });
+  const { error } = await supabase.rpc("set_groq_api_key", { p_api_key: apiKey, p_model: model });
   if (error) throw new Error(error.message);
   redirect("/accounts?ai=connected");
 }
