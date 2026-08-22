@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
     const routerResponse = await fetch(`${routerBaseUrl}/chat/completions`, {
       method: "POST",
       headers: { Authorization: `Bearer ${routerApiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: routerModel, response_format: { type: "json_object" }, messages: [
+      body: JSON.stringify({ model: routerModel, stream: false, response_format: { type: "json_object" }, messages: [
         {
           role: "system",
           content: `Anda adalah asisten keuangan yang mengekstrak transaksi dari pesan obrolan pengguna ke format JSON:
