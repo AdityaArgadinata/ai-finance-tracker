@@ -132,9 +132,9 @@ export async function POST(req: NextRequest) {
       supabase.from("user_ai_settings").select("model, endpoint, provider").eq("user_id", telegramAccount.user_id).maybeSingle(),
     ]);
 
-    const apiKey = process.env.AI_API_KEY || process.env.NINEROUTER_API_KEY || savedApiKey;
-    const model = process.env.AI_MODEL || process.env.NINEROUTER_MODEL || aiSettings?.model;
-    const endpoint = (process.env.AI_BASE_URL || process.env.NINEROUTER_BASE_URL || aiSettings?.endpoint || "https://api.openai.com/v1").replace(/\/$/, "");
+    const apiKey = savedApiKey || process.env.AI_API_KEY || process.env.NINEROUTER_API_KEY;
+    const model = aiSettings?.model || process.env.AI_MODEL || process.env.NINEROUTER_MODEL;
+    const endpoint = (aiSettings?.endpoint || process.env.AI_BASE_URL || process.env.NINEROUTER_BASE_URL || "https://api.openai.com/v1").replace(/\/$/, "");
     const provider = aiSettings?.provider || "custom";
 
     if (!apiKey || !model) {

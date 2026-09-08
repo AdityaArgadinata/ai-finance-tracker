@@ -119,11 +119,13 @@ export async function callAiCompletion({
 }: AiCallOptions): Promise<string> {
   const cleanEndpoint = endpoint.trim().replace(/\/$/, "");
   const isAnthropic = provider === "claude" || cleanEndpoint.includes("api.anthropic.com");
+  const signal = AbortSignal.timeout(7_000);
 
   if (isAnthropic) {
     const url = cleanEndpoint.endsWith("/messages") ? cleanEndpoint : `${cleanEndpoint}/messages`;
     const res = await fetch(url, {
       method: "POST",
+      signal,
       headers: {
         "x-api-key": apiKey,
         "anthropic-version": "2023-06-01",
@@ -153,6 +155,7 @@ export async function callAiCompletion({
 
   let res = await fetch(url, {
     method: "POST",
+    signal,
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
@@ -174,6 +177,7 @@ export async function callAiCompletion({
     if (/response_format|json_object/i.test(errorText)) {
       res = await fetch(url, {
         method: "POST",
+        signal,
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
