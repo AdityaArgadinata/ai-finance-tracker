@@ -2,25 +2,48 @@
 
 import { redirect } from "next/navigation";
 import { createAuthClient } from "@/lib/supabase-auth";
-
-const routerBaseUrl = (process.env.NINEROUTER_BASE_URL ?? "https://9router.com/v1").replace(/\/$/, "");
+import { validateAiConfig } from "@/lib/ai-provider";
 
 export async function saveGroqApiKey(formData: FormData) {
   const apiKey = String(formData.get("api_key") ?? "").trim();
   const model = String(formData.get("model") ?? "").trim();
-  if (!apiKey.startsWith("sk") || apiKey.length < 20 || !model) redirect("/accounts?ai=invalid");
+  const endpointInput = String(formData.get("endpoint") ?? "").trim();
+  const provider = String(formData.get("provider") ?? "custom").trim().toLowerCase();
 
-  try {
-    const response = await fetch(`${routerBaseUrl}/models`, { headers: { Authorization: `Bearer ${apiKey}` } });
-    if (!response.ok) throw new Error("Invalid 9Router API key");
+  const endpoint = (
+    endpointInput ||
+    process.env.AI_BASE_URL ||
+    process.env.NINEROUTER_BASE_URL ||
+    "https://api.openai.com/v1"
+  ).replace(/\/$/, "");
+
+  if (!apiKey || !model || !endpoint) {
+    redirect("/accounts?ai=invalid&reason=missing_fields");
   }
-  catch { redirect("/accounts?ai=invalid"); }
+
+  const validation = await validateAiConfig(endpoint, apiKey, model, provider);
+  if (!validation.ok) {
+    console.error("AI validation failed:", validation.error);
+    redirect(`/accounts?ai=invalid&reason=${encodeURIComponent(validation.error || "connection_failed")}`);
+  }
 
   const supabase = await createAuthClient();
-  const { error } = await supabase.rpc("set_groq_api_key", { p_api_key: apiKey, p_model: model });
-  if (error) throw new Error(error.message);
+  const { error } = await supabase.rpc("set_groq_api_key", {
+    p_api_key: apiKey,
+    p_model: model,
+    p_endpoint: endpoint,
+    p_provider: provider,
+  });
+
+  if (error) {
+    console.error("Database error saving AI settings:", error.message);
+    throw new Error(error.message);
+  }
+
   redirect("/accounts?ai=connected");
 }
+
+export const saveAiSettings = saveGroqApiKey;
 
 export async function removeGroqApiKey() {
   const supabase = await createAuthClient();
@@ -28,3 +51,5 @@ export async function removeGroqApiKey() {
   if (error) throw new Error(error.message);
   redirect("/accounts?ai=removed");
 }
+
+export const removeAiSettings = removeGroqApiKey;

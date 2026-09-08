@@ -1,3 +1,5 @@
+import { extractJsonFromText } from "./ai-provider";
+
 export interface TelegramParsedTransaction {
   jenis: "pemasukan" | "pengeluaran";
   kategori: string;
@@ -6,7 +8,7 @@ export interface TelegramParsedTransaction {
 }
 
 export function parse9RouterResponse(text: string) {
-  return JSON.parse(text.replace(/\s*data:\s*\[DONE\]\s*$/, ""));
+  return extractJsonFromText(text);
 }
 
 export function parseTelegramNominal(text: string) {

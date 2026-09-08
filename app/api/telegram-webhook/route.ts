@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { normalizeTelegramTransaction, parse9RouterResponse, type TelegramParsedTransaction } from "@/lib/telegram-transaction";
+import { normalizeTelegramTransaction, type TelegramParsedTransaction } from "@/lib/telegram-transaction";
+import { callAiCompletion, extractJsonFromText } from "@/lib/ai-provider";
 
 // ── Types ────────────────────────────────────────────
 interface TelegramMessage {
@@ -13,20 +14,11 @@ interface TelegramUpdate {
   message?: TelegramMessage;
 }
 
-interface GroqResponse {
-  choices: {
-    message: {
-      content: string;
-    };
-  }[];
-}
-
 // ── Clients ──────────────────────────────────────────
 const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!,
 );
-const routerBaseUrl = (process.env.NINEROUTER_BASE_URL ?? "https://9router.com/v1").replace(/\/$/, "");
 
 const FORMAT_ERROR = [
   "❌ Format transaksi tidak dikenali.",
@@ -39,72 +31,7 @@ const FORMAT_ERROR = [
   "Gunakan angka untuk nominal, misalnya 26k atau 26000.",
 ].join("\n");
 
-// ── Helpers ──────────────────────────────────────────
-function formatRupiah(n: number): string {
-  return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-}
-
-function replyTelegram(chatId: number, text: string) {
-  return NextResponse.json({ method: "sendMessage", chat_id: chatId, text });
-}
-
-// ── Route ────────────────────────────────────────────
-export async function POST(req: NextRequest) {
-  let chatId: number | undefined;
-  try {
-    const update: TelegramUpdate = await req.json();
-    const msg = update.message;
-
-    // Abaikan non-text
-    if (!msg?.text) {
-      return NextResponse.json({ ok: true }, { status: 200 });
-    }
-
-    chatId = msg.chat.id;
-
-    const linkCode = msg.text.trim().match(/^\/link\s+([a-f0-9]{8})$/i)?.[1].toUpperCase();
-    if (linkCode) {
-      const { data: pending } = await supabase.from("telegram_link_codes").select("user_id, expires_at").eq("code", linkCode).maybeSingle();
-      if (!pending || new Date(pending.expires_at) <= new Date()) {
-        return replyTelegram(chatId, "❌ This link code is invalid or expired. Generate a new code from your Account page.");
-      }
-
-      const { error: linkError } = await supabase.from("telegram_accounts").upsert({ user_id: pending.user_id, chat_id: chatId, linked_at: new Date().toISOString() }, { onConflict: "user_id" });
-      if (linkError) {
-        return replyTelegram(chatId, "❌ This Telegram account is already linked to another user.");
-      }
-
-      await supabase.from("telegram_link_codes").delete().eq("user_id", pending.user_id);
-      return replyTelegram(chatId, "✅ Telegram connected to Expanse. You can now record transactions with natural language.");
-    }
-
-    const { data: telegramAccount } = await supabase.from("telegram_accounts").select("user_id").eq("chat_id", chatId).maybeSingle();
-    if (!telegramAccount) {
-      return replyTelegram(chatId, "🔗 Connect Telegram from your Expanse Account page before recording transactions.");
-    }
-
-    const [{ data: savedRouterApiKey }, { data: aiSettings }] = await Promise.all([
-      supabase.rpc("get_groq_api_key", { p_user_id: telegramAccount.user_id }),
-      supabase.from("user_ai_settings").select("model").eq("user_id", telegramAccount.user_id).maybeSingle(),
-    ]);
-    const routerApiKey = process.env.NINEROUTER_API_KEY || savedRouterApiKey;
-    const routerModel = process.env.NINEROUTER_MODEL || aiSettings?.model;
-    if (!routerApiKey || !routerModel) {
-      return replyTelegram(chatId, "❌ 9Router is not connected.\n\nOpen Expanse → Account, save your 9Router API key and model, then try again.");
-    }
-
-    if (!/\d/.test(msg.text)) {
-      return replyTelegram(chatId, FORMAT_ERROR);
-    }
-
-    // 1. Call 9Router
-    const routerResponse = await fetch(`${routerBaseUrl}/chat/completions`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${routerApiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: routerModel, stream: false, response_format: { type: "json_object" }, messages: [
-        {
-          role: "system",
-          content: `Anda adalah asisten keuangan yang mengekstrak transaksi dari pesan obrolan pengguna ke format JSON:
+const SYSTEM_PROMPT = `Anda adalah asisten keuangan yang mengekstrak transaksi dari pesan obrolan pengguna ke format JSON:
 {
   "jenis": "pemasukan" | "pengeluaran",
   "kategori": string,
@@ -154,21 +81,87 @@ CONTOH PARSING LAINNYA:
 - Input: "date makan 100k" → item="makan", nominal=100000, jenis="pengeluaran", kategori="Date"
 - Input: "beli nasi padang 15k" → item="nasi padang", nominal=15000, jenis="pengeluaran", kategori="Makanan & Minuman"
 - Input: "beli kopi 8k" → item="kopi", nominal=8000, jenis="pengeluaran", kategori="Makanan & Minuman"
-- Input: "gaji bulanan 5000k" → item="gaji bulanan", nominal=5000000, jenis="pemasukan", kategori="Gaji"`
-        },
-        { role: "user", content: msg.text },
-      ] }),
-    });
-    const responseText = await routerResponse.text();
-    if (!routerResponse.ok) throw new Error(`9Router ${routerResponse.status}: ${responseText}`);
-    const completion = parse9RouterResponse(responseText) as GroqResponse;
+- Input: "gaji bulanan 5000k" → item="gaji bulanan", nominal=5000000, jenis="pemasukan", kategori="Gaji"`;
 
-    const raw = completion.choices[0]?.message?.content;
-    if (!raw) {
-      return replyTelegram(chatId, "❌ Failed to process the message.");
+// ── Helpers ──────────────────────────────────────────
+function formatRupiah(n: number): string {
+  return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+function replyTelegram(chatId: number, text: string) {
+  return NextResponse.json({ method: "sendMessage", chat_id: chatId, text });
+}
+
+// ── Route ────────────────────────────────────────────
+export async function POST(req: NextRequest) {
+  let chatId: number | undefined;
+  try {
+    const update: TelegramUpdate = await req.json();
+    const msg = update.message;
+
+    // Abaikan non-text
+    if (!msg?.text) {
+      return NextResponse.json({ ok: true }, { status: 200 });
     }
 
-    const parsed = normalizeTelegramTransaction(msg.text, JSON.parse(raw) as TelegramParsedTransaction);
+    chatId = msg.chat.id;
+
+    const linkCode = msg.text.trim().match(/^\/link\s+([a-f0-9]{8})$/i)?.[1].toUpperCase();
+    if (linkCode) {
+      const { data: pending } = await supabase.from("telegram_link_codes").select("user_id, expires_at").eq("code", linkCode).maybeSingle();
+      if (!pending || new Date(pending.expires_at) <= new Date()) {
+        return replyTelegram(chatId, "❌ This link code is invalid or expired. Generate a new code from your Account page.");
+      }
+
+      const { error: linkError } = await supabase.from("telegram_accounts").upsert({ user_id: pending.user_id, chat_id: chatId, linked_at: new Date().toISOString() }, { onConflict: "user_id" });
+      if (linkError) {
+        return replyTelegram(chatId, "❌ This Telegram account is already linked to another user.");
+      }
+
+      await supabase.from("telegram_link_codes").delete().eq("user_id", pending.user_id);
+      return replyTelegram(chatId, "✅ Telegram connected to Expanse. You can now record transactions with natural language.");
+    }
+
+    const { data: telegramAccount } = await supabase.from("telegram_accounts").select("user_id").eq("chat_id", chatId).maybeSingle();
+    if (!telegramAccount) {
+      return replyTelegram(chatId, "🔗 Hubungkan akun Telegram dari halaman Expanse → Account sebelum mencatat transaksi.");
+    }
+
+    const [{ data: savedApiKey }, { data: aiSettings }] = await Promise.all([
+      supabase.rpc("get_groq_api_key", { p_user_id: telegramAccount.user_id }),
+      supabase.from("user_ai_settings").select("model, endpoint, provider").eq("user_id", telegramAccount.user_id).maybeSingle(),
+    ]);
+
+    const apiKey = process.env.AI_API_KEY || process.env.NINEROUTER_API_KEY || savedApiKey;
+    const model = process.env.AI_MODEL || process.env.NINEROUTER_MODEL || aiSettings?.model;
+    const endpoint = (process.env.AI_BASE_URL || process.env.NINEROUTER_BASE_URL || aiSettings?.endpoint || "https://api.openai.com/v1").replace(/\/$/, "");
+    const provider = aiSettings?.provider || "custom";
+
+    if (!apiKey || !model) {
+      return replyTelegram(chatId, "❌ Layanan AI belum terhubung.\n\nBuka Expanse → Account, simpan API Key dan model AI pilihan Anda, lalu coba lagi.");
+    }
+
+    if (!/\d/.test(msg.text)) {
+      return replyTelegram(chatId, FORMAT_ERROR);
+    }
+
+    // 1. Call AI completion via unified provider abstraction
+    const rawContent = await callAiCompletion({
+      endpoint,
+      apiKey,
+      model,
+      provider,
+      systemPrompt: SYSTEM_PROMPT,
+      userPrompt: msg.text,
+    });
+
+    if (!rawContent) {
+      return replyTelegram(chatId, "❌ Gagal memproses pesan transaksi.");
+    }
+
+    const jsonParsed = extractJsonFromText(rawContent) as TelegramParsedTransaction;
+    const parsed = normalizeTelegramTransaction(msg.text, jsonParsed);
+
     if (/\b(?:cafe|kafe|coffee shop)\b/i.test(msg.text)) parsed.kategori = "Cafe";
     else if (/\b(?:date|kencan)\b/i.test(msg.text)) parsed.kategori = "Date";
 
@@ -202,9 +195,15 @@ CONTOH PARSING LAINNYA:
     ].join("\n");
 
     return replyTelegram(chatId, replyText);
-  } catch (err) {
+  } catch (err: any) {
     console.error("Webhook error:", err);
-    if (chatId !== undefined) return replyTelegram(chatId, "❌ Layanan AI sedang bermasalah. Coba lagi atau periksa koneksi 9Router di halaman Account.");
+    if (chatId !== undefined) {
+      const errorDetail = err?.message ? ` (${err.message.slice(0, 100)})` : "";
+      return replyTelegram(
+        chatId,
+        `❌ Layanan AI mengalami kendala${errorDetail}.\nPeriksa kembali konfigurasi endpoint, API key, atau kuota model Anda di halaman Expanse → Account.`
+      );
+    }
   }
 
   return NextResponse.json({ ok: true }, { status: 200 });
