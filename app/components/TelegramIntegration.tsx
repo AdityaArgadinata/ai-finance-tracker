@@ -48,10 +48,9 @@ export function TelegramIntegration({
     }
   }
 
-  const activeProviderPreset = groq?.provider
-    ? AI_PRESETS.find((p) => p.id === groq.provider.toLowerCase())
-    : null;
-  const connectedProviderName = activeProviderPreset?.name ?? (groq?.provider ? groq.provider.toUpperCase() : "AI");
+  const provider = groq?.provider?.toLowerCase();
+  const activeProviderPreset = provider ? AI_PRESETS.find((p) => p.id === provider) : null;
+  const connectedProviderName = activeProviderPreset?.name ?? provider?.toUpperCase() ?? "AI";
 
   return (
     <article className="telegram-card">
