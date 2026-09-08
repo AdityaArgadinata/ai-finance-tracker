@@ -7,8 +7,10 @@ import { TelegramIntegration } from "@/app/components/TelegramIntegration";
 
 const date = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" });
 
-export default async function AccountPage({ searchParams }: { searchParams: Promise<{ ai?: string }> }) {
-  const aiStatus = (await searchParams).ai;
+export default async function AccountPage({ searchParams }: { searchParams: Promise<{ ai?: string; reason?: string }> }) {
+  const params = await searchParams;
+  const aiStatus = params.ai;
+  const aiReason = params.reason;
   const supabase = await createAuthClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -20,7 +22,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const [{ data: telegram }, { data: linkCode }, { data: aiSettings }] = await Promise.all([
     supabase.from("telegram_accounts").select("chat_id, linked_at").maybeSingle(),
     supabase.from("telegram_link_codes").select("code, expires_at").maybeSingle(),
-    supabase.from("user_ai_settings").select("key_hint, model, updated_at").maybeSingle(),
+    supabase.from("user_ai_settings").select("key_hint, model, endpoint, provider, updated_at").maybeSingle(),
   ]);
   const activeCode = linkCode && new Date(linkCode.expires_at) > new Date() ? linkCode : null;
 
@@ -48,7 +50,19 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           </dl>
         </article>
 
-        <TelegramIntegration telegram={telegram ? { chatId: telegram.chat_id, linkedAt: date.format(new Date(telegram.linked_at)) } : null} linkCode={activeCode ? { code: activeCode.code, expiresAt: date.format(new Date(activeCode.expires_at)) } : null} groq={aiSettings ? { keyHint: aiSettings.key_hint, model: aiSettings.model, updatedAt: date.format(new Date(aiSettings.updated_at)) } : null} aiStatus={aiStatus} />
+        <TelegramIntegration
+          telegram={telegram ? { chatId: telegram.chat_id, linkedAt: date.format(new Date(telegram.linked_at)) } : null}
+          linkCode={activeCode ? { code: activeCode.code, expiresAt: date.format(new Date(activeCode.expires_at)) } : null}
+          groq={aiSettings ? {
+            keyHint: aiSettings.key_hint,
+            model: aiSettings.model,
+            endpoint: aiSettings.endpoint ?? "https://api.openai.com/v1",
+            provider: aiSettings.provider ?? "custom",
+            updatedAt: date.format(new Date(aiSettings.updated_at)),
+          } : null}
+          aiStatus={aiStatus}
+          aiReason={aiReason}
+        />
       </section>
     </main>
   );
