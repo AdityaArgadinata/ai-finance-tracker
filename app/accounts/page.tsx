@@ -4,6 +4,7 @@ import { AppHeader } from "@/app/components/AppHeader";
 import { AccountAvatar } from "@/app/components/AccountAvatar";
 import { createAuthClient } from "@/lib/supabase-auth";
 import { TelegramIntegration } from "@/app/components/TelegramIntegration";
+import { ResetAllData } from "@/app/components/ResetAllData";
 
 const date = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" });
 
@@ -63,6 +64,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           aiStatus={aiStatus}
           aiReason={aiReason}
         />
+        <ResetAllData />
       </section>
     </main>
   );
