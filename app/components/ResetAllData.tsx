@@ -14,7 +14,11 @@ export function ResetAllData() {
   function handleReset() {
     startTransition(async () => {
       try {
-        await resetAllTransactions();
+        const result = await resetAllTransactions();
+        if (result.error) {
+          setError(result.error);
+          return;
+        }
         setOpen(false);
         setError("");
         router.refresh();
