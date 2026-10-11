@@ -8,7 +8,7 @@ import type { Transaction } from "@/lib/supabase";
 import { translateCategory } from "@/lib/utils";
 
 const PAGE_SIZE = 10;
-const STANDARD_CATEGORIES = ["Cafe", "Date", "Makanan & Minuman", "Rokok", "Transportasi", "Belanja", "Tagihan & Utilitas", "Hiburan", "Kesehatan", "Pendidikan", "Gaji", "Investasi", "Bisnis", "Lain-lain"];
+const STANDARD_CATEGORIES = ["Cafe", "Date", "Makanan & Minuman", "Rokok", "Transportasi", "Belanja", "Skincare", "Tagihan & Utilitas", "Hiburan", "Kesehatan", "Pendidikan", "Gaji", "Investasi", "Bisnis", "Lain-lain"];
 const currency = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
 const date = new Intl.DateTimeFormat("id-ID", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 

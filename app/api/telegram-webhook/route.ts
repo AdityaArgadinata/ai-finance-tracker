@@ -59,7 +59,8 @@ ATURAN KATEGORI & JENIS:
    - "Makanan & Minuman": nasi, mie, kopi, teh, air, snack, kerupuk, coklat, permen, minuman bersoda
    - "Rokok": rokok, vape, pod, tembakau
    - "Transportasi": bensin, solar, tol, taxi, ojek, parkir, bus, kereta
-   - "Belanja": pakaian, sepatu, tas, tissue, lotion, sabun, shampoo, deodorant, sikat gigi, pasta gigi, pembalut, popok, skincare, kosmetik, barang elektronik kecil, peralatan rumah tangga minimarket
+   - "Belanja": pakaian, sepatu, tas, tissue, sabun, shampoo, deodorant, sikat gigi, pasta gigi, pembalut, popok, kosmetik, barang elektronik kecil, peralatan rumah tangga minimarket
+   - "Skincare": skincare, lotion wajah, sunscreen, serum, moisturizer
    - "Tagihan & Utilitas": listrik, internet, pulsa, air, sewa rumah, cicilan, kartu kredit
    - "Hiburan": bioskop, game, spotify, tiket pesawat, hotel, liburan
    - "Kesehatan": obat, vitamin, rumah sakit, dokter, gym
