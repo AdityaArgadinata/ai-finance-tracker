@@ -77,7 +77,7 @@ export function TelegramIntegration({
           <i />
           <div>
             <strong>Telegram connected</strong>
-            <small>Chat ID {telegram.chatId} · Linked {telegram.linkedAt} · Daily report at 21:00 WIB; send /hariini anytime.</small>
+            <small>Chat ID {telegram.chatId} · Linked {telegram.linkedAt} · Daily 21:00, weekly Sunday 19:00 WIB; send /hariini or /mingguini anytime.</small>
           </div>
           <form action={disconnectTelegram}>
             <button><Unlink /> Disconnect</button>

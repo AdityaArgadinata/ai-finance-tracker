@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { normalizeTelegramTransaction, type TelegramParsedTransaction } from "@/lib/telegram-transaction";
 import { callAiCompletion, extractJsonFromText } from "@/lib/ai-provider";
-import { dailySpendingMessage, jakartaDayRange } from "@/lib/telegram-daily-report";
+import { dailySpendingMessage, jakartaDayRange, jakartaWeekRange, weeklySpendingMessage } from "@/lib/telegram-daily-report";
 
 // ── Types ────────────────────────────────────────────
 interface TelegramMessage {
@@ -20,6 +20,26 @@ const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!,
 );
+let telegramCommandsRegistered = false;
+
+async function registerTelegramCommands() {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (telegramCommandsRegistered || !token) return;
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${token}/setMyCommands`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ commands: [
+        { command: "start", description: "Petunjuk penggunaan bot" },
+        { command: "hariini", description: "Ringkasan pengeluaran hari ini" },
+        { command: "mingguini", description: "Ringkasan pengeluaran minggu ini" },
+      ] }),
+    });
+    telegramCommandsRegistered = response.ok && (await response.json()).ok === true;
+  } catch (error) {
+    console.error("Failed to register Telegram commands:", error);
+  }
+}
 
 const FORMAT_ERROR = [
   "❌ Format transaksi tidak dikenali.",
@@ -30,7 +50,7 @@ const FORMAT_ERROR = [
   "• gaji bulanan 5000k",
   "",
   "Gunakan angka untuk nominal, misalnya 26k atau 26000.",
-  "Ketik /hariini untuk melihat total pengeluaran per kategori hari ini.",
+  "Ketik /hariini atau /mingguini untuk melihat ringkasan pengeluaran.",
 ].join("\n");
 
 const SYSTEM_PROMPT = `Anda adalah asisten keuangan yang mengekstrak transaksi dari pesan obrolan pengguna ke format JSON:
@@ -108,6 +128,11 @@ export async function POST(req: NextRequest) {
     }
 
     chatId = msg.chat.id;
+    await registerTelegramCommands();
+
+    if (/^\/(?:start|help)(?:@\w+)?$/i.test(msg.text.trim())) {
+      return replyTelegram(chatId, "Kirim transaksi seperti ‘beli kopi 20k’ untuk mencatatnya.\n/hariini — ringkasan hari ini\n/mingguini — ringkasan minggu ini");
+    }
 
     const linkCode = msg.text.trim().match(/^\/link\s+([a-f0-9]{8})$/i)?.[1].toUpperCase();
     if (linkCode) {
@@ -137,6 +162,15 @@ export async function POST(req: NextRequest) {
         .gte("created_at", start).lt("created_at", end);
       if (error) return replyTelegram(chatId, "❌ Gagal mengambil ringkasan pengeluaran hari ini.");
       return replyTelegram(chatId, dailySpendingMessage(date, expenses ?? []));
+    }
+
+    if (/^(?:\/mingguini(?:@\w+)?|\/weekly(?:@\w+)?|minggu ini|rekap minggu ini)$/i.test(msg.text.trim())) {
+      const { weekStart, start, end } = jakartaWeekRange();
+      const { data: expenses, error } = await supabase.from("transactions").select("kategori, nominal")
+        .eq("user_id", telegramAccount.user_id).eq("jenis", "pengeluaran")
+        .gte("created_at", start).lte("created_at", end);
+      if (error) return replyTelegram(chatId, "❌ Gagal mengambil ringkasan pengeluaran minggu ini.");
+      return replyTelegram(chatId, weeklySpendingMessage(weekStart, expenses ?? []));
     }
 
     const [{ data: savedApiKey }, { data: aiSettings }] = await Promise.all([

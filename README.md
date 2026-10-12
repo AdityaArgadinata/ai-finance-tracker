@@ -57,7 +57,7 @@ AI_MODEL=gpt-4o-mini
 
 After signing in, configure your AI provider preset or custom endpoint, model ID, and API key directly from the **Account** page.
 
-For automatic Telegram reports, set `CRON_SECRET` in the production deployment environment. Vercel sends the report daily at 21:00 WIB.
+For automatic Telegram reports, set `CRON_SECRET` in the production deployment environment. Vercel sends daily reports at 21:00 WIB and weekly reports on Sunday at 19:00 WIB.
 
 ### 5. Running Server & Webhook (Local)
 Run the Next.js server:
