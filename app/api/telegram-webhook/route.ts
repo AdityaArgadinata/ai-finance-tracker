@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { normalizeTelegramTransaction, type TelegramParsedTransaction } from "@/lib/telegram-transaction";
 import { callAiCompletion, extractJsonFromText } from "@/lib/ai-provider";
+import { dailySpendingMessage, jakartaDayRange } from "@/lib/telegram-daily-report";
 
 // ── Types ────────────────────────────────────────────
 interface TelegramMessage {
@@ -29,6 +30,7 @@ const FORMAT_ERROR = [
   "• gaji bulanan 5000k",
   "",
   "Gunakan angka untuk nominal, misalnya 26k atau 26000.",
+  "Ketik /hariini untuk melihat total pengeluaran per kategori hari ini.",
 ].join("\n");
 
 const SYSTEM_PROMPT = `Anda adalah asisten keuangan yang mengekstrak transaksi dari pesan obrolan pengguna ke format JSON:
@@ -126,6 +128,15 @@ export async function POST(req: NextRequest) {
     const { data: telegramAccount } = await supabase.from("telegram_accounts").select("user_id").eq("chat_id", chatId).maybeSingle();
     if (!telegramAccount) {
       return replyTelegram(chatId, "🔗 Hubungkan akun Telegram dari halaman Expanse → Account sebelum mencatat transaksi.");
+    }
+
+    if (/^(?:\/hariini(?:@\w+)?|\/today(?:@\w+)?|hari ini|rekap hari ini)$/i.test(msg.text.trim())) {
+      const { date, start, end } = jakartaDayRange();
+      const { data: expenses, error } = await supabase.from("transactions").select("kategori, nominal")
+        .eq("user_id", telegramAccount.user_id).eq("jenis", "pengeluaran")
+        .gte("created_at", start).lt("created_at", end);
+      if (error) return replyTelegram(chatId, "❌ Gagal mengambil ringkasan pengeluaran hari ini.");
+      return replyTelegram(chatId, dailySpendingMessage(date, expenses ?? []));
     }
 
     const [{ data: savedApiKey }, { data: aiSettings }] = await Promise.all([

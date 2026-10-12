@@ -49,12 +49,15 @@ Create a `.env.local` file in the *root* folder and fill it with your credential
 SUPABASE_URL=your_supabase_project_url
 SUPABASE_SERVICE_KEY=your_supabase_service_role_key
 TELEGRAM_BOT_TOKEN=your_telegram_bot_token
+CRON_SECRET=your_random_cron_secret
 AI_BASE_URL=https://api.openai.com/v1
 AI_API_KEY=your_ai_api_key
 AI_MODEL=gpt-4o-mini
 ```
 
 After signing in, configure your AI provider preset or custom endpoint, model ID, and API key directly from the **Account** page.
+
+For automatic Telegram reports, set `CRON_SECRET` in the production deployment environment. Vercel sends the report daily at 21:00 WIB.
 
 ### 5. Running Server & Webhook (Local)
 Run the Next.js server:
