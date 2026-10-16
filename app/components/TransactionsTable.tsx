@@ -12,13 +12,13 @@ const STANDARD_CATEGORIES = ["Cafe", "Date", "Makanan & Minuman", "Rokok", "Tran
 const currency = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
 const date = new Intl.DateTimeFormat("id-ID", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
-export function TransactionsTable({ transactions }: { transactions: Transaction[] }) {
+export function TransactionsTable({ transactions, initialCategory = "" }: { transactions: Transaction[]; initialCategory?: string }) {
   const router = useRouter();
   const [page, setPage] = useState(1);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [category, setCategory] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
+  const [category, setCategory] = useState(initialCategory);
+  const [showFilters, setShowFilters] = useState(Boolean(initialCategory));
   const [editing, setEditing] = useState<Transaction | null>();
   const [deleting, setDeleting] = useState<Transaction | null>(null);
   const [importing, setImporting] = useState(false);

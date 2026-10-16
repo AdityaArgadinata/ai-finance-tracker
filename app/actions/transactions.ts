@@ -21,7 +21,7 @@ async function authorize() {
   return { supabase, user };
 }
 
-function refresh() { ["/", "/transactions", "/analytics"].forEach((path) => revalidatePath(path)); }
+function refresh() { ["/", "/transactions", "/analytics", "/report"].forEach((path) => revalidatePath(path)); }
 
 export async function createTransaction(formData: FormData) {
   const { supabase, user } = await authorize();

@@ -14,7 +14,7 @@ export async function resetAllTransactions() {
     return { error: "Failed to reset transactions. Please try again." };
   }
 
-  for (const path of ["/", "/transactions", "/analytics"]) {
+  for (const path of ["/", "/transactions", "/analytics", "/report"]) {
     revalidatePath(path);
   }
   return { error: null };

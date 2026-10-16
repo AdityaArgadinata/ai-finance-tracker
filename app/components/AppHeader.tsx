@@ -1,4 +1,4 @@
-import { Bell, BookOpen, ChartNoAxesCombined, ChevronRight, CircleUserRound, House, LogOut, ReceiptText } from "lucide-react";
+import { Bell, BookOpen, ChartNoAxesCombined, ChevronRight, CircleUserRound, FileText, House, LogOut, ReceiptText } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -10,6 +10,7 @@ const links = [
   ["Dashboard", "/", House],
   ["Transactions", "/transactions", ReceiptText],
   ["Analytics", "/analytics", ChartNoAxesCombined],
+  ["Report", "/report", FileText],
   ["Accounts", "/accounts", CircleUserRound],
   ["Tutorial", "/tutorial", BookOpen],
 ] as const;
