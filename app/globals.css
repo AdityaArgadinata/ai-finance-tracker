@@ -195,3 +195,5 @@ button { border: 0; cursor: pointer; }
   .mobile-dock a.active { color: #111; background: var(--lime); }
   .mobile-dock svg { width: 20px; height: 20px; }
 }
+
+.report-month { color: inherit; text-underline-offset: 4px; }.report-month:hover { color: var(--lime); }.report-detail { display: grid; gap: 18px; }

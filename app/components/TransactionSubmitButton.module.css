@@ -1,0 +1,25 @@
+.button {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.button:disabled {
+  cursor: wait;
+}
+
+.spinner {
+  position: absolute;
+  inset: 0;
+  width: 20px;
+  height: 20px;
+  margin: auto;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin .9s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

@@ -1,3 +1,5 @@
+import "./report.css";
+import Link from "next/link";
 import { AppHeader } from "@/app/components/AppHeader";
 import { getTransactions } from "@/lib/supabase";
 
@@ -25,8 +27,8 @@ export default async function ReportPage() {
         {!months.size ? <p className="empty-transactions">No transactions yet.</p> : <div className="comparison-table-wrap">
           <table className="comparison-table">
             <thead><tr><th scope="col">Month</th><th scope="col">Transactions</th><th scope="col">Income</th><th scope="col">Expense</th><th scope="col">Net balance</th></tr></thead>
-            <tbody>{[...months].sort(([a], [b]) => b.localeCompare(a)).map(([month, totals]) => <tr key={month}>
-              <th scope="row">{monthLabel.format(new Date(`${month}-01T00:00:00+07:00`))}</th>
+            <tbody>{[...months].sort(([a], [b]) => b.localeCompare(a)).map(([month, totals]) => <tr className="report-row" key={month}>
+              <th scope="row"><Link className="report-row-link" href={`/report/${month}`}>{monthLabel.format(new Date(`${month}-01T00:00:00+07:00`))}</Link></th>
               <td>{totals.count}</td><td>{currency.format(totals.income)}</td><td>{currency.format(totals.expense)}</td>
               <td className={totals.income >= totals.expense ? "positive" : "negative"}>{currency.format(totals.income - totals.expense)}</td>
             </tr>)}</tbody>
